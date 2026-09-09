@@ -33,4 +33,5 @@ export interface HealthResponse {
 }
 
 export * from "./password/hibp.js";
+export * from "./scoring/engine.js";
 export * from "./scoring/questions.js";
