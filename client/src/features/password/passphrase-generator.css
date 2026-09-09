@@ -1,0 +1,94 @@
+/* US-03 passphrase generator. Tokens only — no literal colors/fonts/radii. */
+
+.sot-ppgen {
+  max-width: 34rem;
+}
+
+.sot-ppgen__lede {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-0);
+  line-height: var(--line-body);
+}
+
+.sot-ppgen__lede code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.sot-ppgen__output-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.sot-ppgen__output-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sot-ppgen__output {
+  width: 100%;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  overflow-x: auto;
+  text-overflow: ellipsis;
+}
+
+/* Keep the copy control's nowrap tooltip inside the viewport on narrow screens. */
+.sot-ppgen__output-row .sot-tooltip-host > .sot-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.sot-ppgen__entropy {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  font-size: var(--font-size-0);
+  line-height: var(--line-body);
+  background: var(--color-surface-alt);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.sot-ppgen__words {
+  margin-bottom: var(--space-4);
+}
+
+.sot-ppgen__slider {
+  width: 100%;
+  accent-color: var(--color-primary-strong);
+  min-height: var(--control-height);
+}
+
+.sot-ppgen__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.sot-ppgen__options legend {
+  padding: 0 var(--space-1);
+}
+
+@media (max-width: 767px) {
+  .sot-ppgen__output-row .sot-btn--icon {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+
+  .sot-ppgen__slider {
+    min-height: var(--touch-target);
+  }
+
+  .sot-ppgen__options .sot-checkbox {
+    min-height: var(--touch-target);
+    align-items: center;
+  }
+}
