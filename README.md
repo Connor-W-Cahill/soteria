@@ -42,6 +42,15 @@ the `mssql` driver. `DATABASE_URL` carries the connection (see `.env.example`).
 The schema, its privacy invariants, and the ERD are documented in
 [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
+## Deployment
+
+Azure Static Web Apps (client), Azure App Service on Linux/Node 22 (API), and
+Azure SQL Database, provisioned by [`infra/main.bicep`](infra/main.bicep) via
+[`infra/deploy.sh`](infra/deploy.sh) and deployed by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) after CI passes
+on `main`. The walkthrough, the GitHub secrets, and the production security
+posture are in [`docs/deploy.md`](docs/deploy.md).
+
 ## API conventions
 
 The error envelope, request validation, log redaction, correlation ids, rate

@@ -1,0 +1,88 @@
+name: Deploy
+
+# Deploys only after CI has passed on main. Never runs on a pull request, so a
+# fork or an unreviewed branch can never reach production.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the API
+        run: npm run build -w @soteria/server
+
+      - name: Build the client
+        run: npm run build -w @soteria/client
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      # The API is deployed as a self-contained bundle: compiled JS plus the
+      # production dependency tree, with no build step on App Service.
+      - name: Assemble the API bundle
+        run: |
+          mkdir -p .deploy/api
+          cp -r server/dist .deploy/api/dist
+          cp server/package.json .deploy/api/package.json
+          cp package-lock.json .deploy/api/package-lock.json
+          npm ci --omit=dev --prefix .deploy/api --ignore-scripts
+
+      - name: Apply database migrations
+        run: npm run db:migrate && npm run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy the API to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .deploy/api
+
+      - name: Deploy the client to Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: client/dist
+          skip_app_build: true
+          skip_api_build: true
+
+      - name: Verify the deployment is healthy
+        run: |
+          for attempt in $(seq 1 12); do
+            body=$(curl -fsS "${{ secrets.API_URL }}/api/health" || true)
+            echo "attempt $attempt: $body"
+            if [ "$(jq -r '.status' <<<"$body" 2>/dev/null)" = "ok" ] \
+               && [ "$(jq -r '.dbConnected' <<<"$body" 2>/dev/null)" = "true" ]; then
+              echo "Deployment is healthy."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "The API did not report a healthy, database-connected state."
+          exit 1

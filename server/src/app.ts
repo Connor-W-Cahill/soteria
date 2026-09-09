@@ -1,12 +1,12 @@
 import type { HealthResponse } from "@soteria/shared";
 import express from "express";
-import helmet from "helmet";
 import { z } from "zod";
 
 import { isDbConnected } from "./db/knex.js";
 import { errorHandler, notFoundHandler } from "./http/errors.js";
 import { globalRateLimit, publicRateLimit } from "./http/rate-limit.js";
 import { requestId } from "./http/request-id.js";
+import { corsMiddleware, securityHeaders } from "./http/security.js";
 import { validate } from "./http/validate.js";
 import { requestLog } from "./logging/request-log.js";
 
@@ -29,7 +29,8 @@ export function createApp(options: AppOptions = {}) {
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
-  app.use(helmet());
+  app.use(securityHeaders());
+  app.use(corsMiddleware());
   app.use(requestId());
   app.use(requestLog());
 
