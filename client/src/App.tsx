@@ -1,17 +1,36 @@
-import { Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppShell, NAV_ITEMS } from "./components/AppShell";
+import { EmptyState } from "./components";
+
+const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
+
+function Placeholder({ title }: { title: string }) {
+  return (
+    <EmptyState
+      title={`${title} is coming soon`}
+      body="This screen is part of a later Soteria milestone. The shell, tokens and base components are what this build delivers."
+    />
+  );
+}
 
 export function App() {
   return (
-    <Routes>
-      <Route
-        path="*"
-        element={
-          <main>
-            <h1>Soteria</h1>
-            <p>Personal cybersecurity posture assistant.</p>
-          </main>
-        }
-      />
-    </Routes>
+    <AppShell>
+      <Suspense fallback={<p>Loading…</p>}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {NAV_ITEMS.map((item) => (
+            <Route
+              key={item.to}
+              path={item.to}
+              element={<Placeholder title={item.label} />}
+            />
+          ))}
+          {DevKit ? <Route path="/dev/kit" element={<DevKit />} /> : null}
+          <Route path="*" element={<Placeholder title="This page" />} />
+        </Routes>
+      </Suspense>
+    </AppShell>
   );
 }

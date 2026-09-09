@@ -1,0 +1,209 @@
+/* Base: reset-ish, typography, app shell, global focus ring. Tokens only. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-0);
+  font-weight: var(--weight-body);
+  line-height: var(--line-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-heading);
+  line-height: var(--line-heading);
+}
+
+h1 {
+  font-size: var(--font-size-4);
+}
+h2 {
+  font-size: var(--font-size-3);
+}
+h3 {
+  font-size: var(--font-size-2);
+}
+h4 {
+  font-size: var(--font-size-1);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+a {
+  color: var(--color-primary-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Accessibility overlay: visible focus ring on every interactive element. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-primary-strong);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ---- App shell: split-header ---- */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__band1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.app__wordmark {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-heading-strong);
+  font-size: var(--font-size-1);
+  color: var(--color-text);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.app__band1-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.app__band2 {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+  overflow-x: auto;
+}
+
+.app__navlink {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: var(--weight-body-bold);
+  border-bottom: 2px solid transparent;
+  transition: color var(--motion-duration) var(--motion-ease);
+  white-space: nowrap;
+}
+
+.app__navlink:hover {
+  color: var(--color-text);
+}
+
+.app__navlink[aria-current="page"] {
+  color: var(--color-primary-strong);
+  border-bottom-color: var(--color-primary-strong);
+}
+
+.app__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+/* Bottom tab bar below 768px */
+.app__tabbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app__band2 {
+    display: none;
+  }
+
+  .app__tabbar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-surface);
+    border-top: var(--border-width) solid var(--color-border);
+  }
+
+  .app__tabbar .app__navlink {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    min-height: var(--touch-target);
+    padding: var(--space-1) 2px;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+  }
+
+  .app__tabbar .app__navlink[aria-current="page"] {
+    border-top-color: var(--color-primary-strong);
+    border-bottom-color: transparent;
+  }
+
+  .app__main {
+    padding: var(--space-4) var(--space-3);
+  }
+}
+
+.app__footer {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-align: center;
+  border-top: var(--border-width) solid var(--color-border);
+}

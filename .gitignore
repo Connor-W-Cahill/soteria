@@ -4,3 +4,6 @@ node_modules/
 !.env.example
 dist/
 *.tsbuildinfo
+playwright-report/
+test-results/
+.playwright/
