@@ -29,6 +29,13 @@ describe("safeNext", () => {
     "/\\evil.example",
     "/\\/evil.example",
     "\\\\evil.example",
+    // Only the `includes("\\")` line catches these two: they start with a
+    // single "/" followed by an ordinary character, so the leading-slash and
+    // "/\\" checks both pass them. Without that line these are the cases that
+    // reach the router — and IE-era normalisation of "\\" to "/" is exactly the
+    // class of parser difference that turns a path into a host.
+    "/foo\\bar",
+    "/\tevil.example\\x",
     "javascript:alert(1)",
     "data:text/html,<script>alert(1)</script>",
     "mailto:someone@example.com",

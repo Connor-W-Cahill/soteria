@@ -3,6 +3,7 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../app.js";
+import { ApiError } from "../http/errors.js";
 import { SESSION_COOKIE } from "./cookie.js";
 import { GoogleTokenError, type GoogleIdentity } from "./google.js";
 import {
@@ -32,6 +33,8 @@ interface Overrides {
   verifyIdToken?: (token: string) => Promise<GoogleIdentity>;
   user?: UserRecord | undefined;
   bumpVersion?: (id: string) => Promise<number | undefined>;
+  upsertUser?: () => Promise<UserRecord>;
+  enableRateLimit?: boolean;
 }
 
 /** An app with Google and the database stubbed, so only our own logic is tested. */
@@ -44,8 +47,11 @@ function testApp(overrides: Overrides = {}) {
     auth: TEST_AUTH_CONFIG,
     loadSessionUser: async () => user,
     authRouterOptions: {
+      ...(overrides.enableRateLimit === undefined
+        ? {}
+        : { enableRateLimit: overrides.enableRateLimit }),
       verifyIdToken: overrides.verifyIdToken ?? (async () => IDENTITY),
-      upsertUser: async () => USER,
+      upsertUser: overrides.upsertUser ?? (async () => USER),
       bumpVersion: overrides.bumpVersion ?? (async () => USER.tokenVersion + 1),
       // The audit trail is exercised by db/audit.test.ts; here it must not need
       // a database.
@@ -387,5 +393,186 @@ describe("POST /api/auth/logout", () => {
       .expect(204);
 
     expect(bumpVersion).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Regression tests for the independent security review of PR #105.
+ *
+ * Each one is here because the review found a guard that either did not exist or
+ * existed with nothing asserting it. The review's own finding 6 was that four
+ * guards survived mutation with zero test failures while the PR claimed every
+ * guard had been mutation-tested — so these are written to fail when their fix
+ * is reverted, and each was checked that way.
+ */
+describe("security review regressions (#105)", () => {
+  it("emits no Set-Cookie when an anonymous caller posts to logout", async () => {
+    // Finding 3, a CSRF forced sign-out reproduced in a browser. clearSessionCookie
+    // used to run outside the session guard, so any site could JS-submit a
+    // cross-site form POST here and delete a visitor's cookie: SameSite=Lax
+    // withheld the cookie (so no version bump) but the expiring Set-Cookie still
+    // applied. The pre-existing "is idempotent" test asserted only that
+    // bumpVersion was not called, which is why this went unnoticed.
+    const response = await request(testApp())
+      .post("/api/auth/logout")
+      .expect(204);
+
+    expect(sessionCookie(response)).toBeUndefined();
+  });
+
+  it("still clears the cookie for a caller that presents a valid session", async () => {
+    const token = await issueSessionToken(
+      { userId: USER.id, tokenVersion: USER.tokenVersion },
+      TEST_AUTH_CONFIG,
+    );
+
+    const response = await request(testApp())
+      .post("/api/auth/logout")
+      .set("Cookie", `${SESSION_COOKIE}=${token}`)
+      .expect(204);
+
+    expect(sessionCookie(response)).toContain(`${SESSION_COOKIE}=;`);
+  });
+
+  it("rate-limits the credential endpoint well below the global limit", async () => {
+    // Finding 4: sensitiveRateLimit existed, named US-14 in its docstring, and
+    // was mounted nowhere, so the first 429 came at request #121 — 120 outbound
+    // Google verifications and up to 120 audit inserts per minute per IP.
+    const app = testApp({ enableRateLimit: true });
+    let firstLimited = 0;
+
+    for (let attempt = 1; attempt <= 40 && firstLimited === 0; attempt++) {
+      const response = await request(app)
+        .post("/api/auth/google")
+        .send({ credential: "a-google-id-token" });
+
+      if (response.status === 429) firstLimited = attempt;
+    }
+
+    expect(firstLimited).toBeGreaterThan(0);
+    expect(firstLimited).toBeLessThan(40);
+  });
+
+  it("rejects a session token that omits exp", async () => {
+    // Finding 7: jose does not require exp unless asked, so a hand-signed token
+    // without it verified and never expired.
+    const token = await new SignJWT({ tv: USER.tokenVersion })
+      .setProtectedHeader({ alg: SESSION_ALGORITHM })
+      .setSubject(USER.id)
+      .setIssuer(SESSION_ISSUER)
+      .setAudience(SESSION_AUDIENCE)
+      .setIssuedAt(Math.floor(Date.now() / 1000))
+      .sign(TEST_AUTH_CONFIG.sessionSecret);
+
+    const response = await request(testApp())
+      .get("/api/me")
+      .set("Cookie", `${SESSION_COOKIE}=${token}`)
+      .expect(200);
+
+    expect(response.body).toEqual({ user: null });
+  });
+
+  it("rejects a token minted by a different issuer", async () => {
+    // Finding 6: the issuer option was passed but nothing asserted it.
+    const now = Math.floor(Date.now() / 1000);
+    const token = await new SignJWT({ tv: USER.tokenVersion })
+      .setProtectedHeader({ alg: SESSION_ALGORITHM })
+      .setSubject(USER.id)
+      .setIssuer("not-soteria")
+      .setAudience(SESSION_AUDIENCE)
+      .setIssuedAt(now)
+      .setExpirationTime(now + SESSION_TTL_SECONDS)
+      .sign(TEST_AUTH_CONFIG.sessionSecret);
+
+    const response = await request(testApp())
+      .get("/api/me")
+      .set("Cookie", `${SESSION_COOKIE}=${token}`)
+      .expect(200);
+
+    expect(response.body).toEqual({ user: null });
+  });
+
+  for (const [label, claims] of [
+    ["a non-string sub", { sub: 42 }],
+    ["an empty sub", { sub: "" }],
+    ["a string tv", { tv: "3" }],
+    ["a fractional tv", { tv: 3.5 }],
+  ] as const) {
+    it(`rejects a token with ${label}`, async () => {
+      // Finding 6: the sub and tv shape checks in verifySessionToken had no test.
+      const now = Math.floor(Date.now() / 1000);
+      const payload: Record<string, unknown> = {
+        sub: USER.id,
+        tv: USER.tokenVersion,
+        ...(claims as Record<string, unknown>),
+      };
+      const token = await new SignJWT(payload)
+        .setProtectedHeader({ alg: SESSION_ALGORITHM })
+        .setIssuer(SESSION_ISSUER)
+        .setAudience(SESSION_AUDIENCE)
+        .setIssuedAt(now)
+        .setExpirationTime(now + SESSION_TTL_SECONDS)
+        .sign(TEST_AUTH_CONFIG.sessionSecret);
+
+      const response = await request(testApp())
+        .get("/api/me")
+        .set("Cookie", `${SESSION_COOKIE}=${token}`)
+        .expect(200);
+
+      expect(response.body).toEqual({ user: null });
+    });
+  }
+
+  it("tells a caller to sign out and never caches an auth response", async () => {
+    // Finding 8: /api/me returns id, email and display name, and Express adds an
+    // ETag, so the review watched a 304 come back on revalidation.
+    for (const path of ["/api/me"]) {
+      const response = await request(testApp()).get(path).expect(200);
+
+      expect(response.headers["cache-control"]).toBe("no-store");
+      expect(response.headers["vary"]).toContain("Cookie");
+    }
+  });
+
+  it("passes an email-collision conflict through as 409, not 500", async () => {
+    // Finding 5, the route's half. The mapping from a driver error to this
+    // ApiError lives in users.ts and is covered by users.test.ts; what matters
+    // here is that the route does not turn it into an opaque 500, and that
+    // nothing about the collision reaches the client.
+    const response = await request(
+      testApp({
+        upsertUser: async () => {
+          throw ApiError.conflict(
+            "That Google account's email address is already linked to a different Soteria account. Sign in with the original account, or contact support to merge them.",
+          );
+        },
+      }),
+    )
+      .post("/api/auth/google")
+      .send({ credential: "a-google-id-token" })
+      .expect(409);
+
+    expect(response.body.error.code).toBe("conflict");
+    expect(response.body.error.message).toContain("already linked");
+    expect(sessionCookie(response)).toBeUndefined();
+  });
+
+  it("still turns an unexpected upsert failure into an opaque 500", async () => {
+    const response = await request(
+      testApp({
+        upsertUser: async () => {
+          throw new Error(
+            "Violation of UNIQUE KEY constraint 'users_email_unique' … (person@example.com)",
+          );
+        },
+      }),
+    )
+      .post("/api/auth/google")
+      .send({ credential: "a-google-id-token" })
+      .expect(500);
+
+    expect(response.body.error.code).toBe("internal_error");
+    expect(JSON.stringify(response.body)).not.toContain("person@example.com");
+    expect(JSON.stringify(response.body)).not.toContain("users_email_unique");
   });
 });
