@@ -1,0 +1,99 @@
+/*
+ * Soteria design tokens — GENERATED, do not edit by hand.
+ * Source: docs/design/derive-seed.mjs 3080478562
+ * Regenerate: node client/scripts/generate-tokens.mjs
+ * This is the ONLY file allowed to contain literal color, font,
+ * radius or shadow values. Everything else consumes these vars.
+ */
+:root {
+  --seed: "3080478562";
+
+  /* Color — light (seeded) */
+  --color-primary: oklch(0.55 0.12 177);
+  --color-primary-strong: oklch(0.42 0.12 177);
+  --color-primary-soft: oklch(0.93 0.040 177);
+  --color-accent: oklch(0.7 0.15 327);
+  --color-surface: oklch(0.985 0.012 40);
+  --color-surface-alt: oklch(0.955 0.012 40);
+  --color-text: oklch(0.22 0.012 40);
+  --color-text-muted: oklch(0.48 0.012 40);
+  --color-border: oklch(0.88 0.012 40);
+  --color-on-primary: oklch(0.99 0 40);
+
+  /* Severity — fixed for legibility, always paired with a text label */
+  --color-severity-critical: oklch(0.5 0.2 25);
+  --color-severity-high: oklch(0.62 0.18 45);
+  --color-severity-medium: oklch(0.75 0.15 80);
+  --color-severity-low: oklch(0.6 0.12 200);
+  --color-severity-none: oklch(0.6 0.12 150);
+
+  /* Type (seeded) */
+  --font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Red Hat Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-size-0: 15px;
+  --font-size-1: 18px;
+  --font-size-2: 21.6px;
+  --font-size-3: 25.9px;
+  --font-size-4: 31.1px;
+  --font-size-5: 37.3px;
+  --line-body: 1.5;
+  --line-heading: 1.2;
+  --weight-body: 400;
+  --weight-body-bold: 600;
+  --weight-heading: 600;
+  --weight-heading-strong: 700;
+
+  /* Shape (seeded) */
+  --radius: 6px;
+  --border-width: 1px;
+
+  /* Space — 4px unit (seeded density) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Motion (seeded: gentle) */
+  --motion-duration: 175ms;
+  --motion-ease: ease-out;
+
+  /* Accessibility overlay — precedence over seeded tokens */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --touch-target: 44px;
+  --control-height: 36px;
+}
+
+/* Dark — same hue and chroma, lightness inverted via darkL() */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: oklch(0.529 0.12 177);
+    --color-primary-strong: oklch(0.636 0.12 177);
+    --color-primary-soft: oklch(0.217 0.04 177);
+    --color-accent: oklch(0.406 0.15 327);
+    --color-surface: oklch(0.172 0.012 40);
+    --color-surface-alt: oklch(0.197 0.012 40);
+    --color-text: oklch(0.8 0.012 40);
+    --color-text-muted: oklch(0.586 0.012 40);
+    --color-border: oklch(0.258 0.012 40);
+    --color-on-primary: oklch(0.15 0.012 40);
+  }
+}
+
+[data-theme="dark"] {
+  --color-primary: oklch(0.529 0.12 177);
+  --color-primary-strong: oklch(0.636 0.12 177);
+  --color-primary-soft: oklch(0.217 0.04 177);
+  --color-accent: oklch(0.406 0.15 327);
+  --color-surface: oklch(0.172 0.012 40);
+  --color-surface-alt: oklch(0.197 0.012 40);
+  --color-text: oklch(0.8 0.012 40);
+  --color-text-muted: oklch(0.586 0.012 40);
+  --color-border: oklch(0.258 0.012 40);
+  --color-on-primary: oklch(0.15 0.012 40);
+}
+
