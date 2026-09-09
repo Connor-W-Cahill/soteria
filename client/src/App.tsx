@@ -6,6 +6,7 @@ import { useSession } from "./session";
 
 const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
+const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -27,6 +28,7 @@ export function App() {
             element={<Navigate to={homePathFor(status)} replace />}
           />
           <Route path="/password-tools" element={<PasswordTools />} />
+          <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
             (item) => (
               <Route
