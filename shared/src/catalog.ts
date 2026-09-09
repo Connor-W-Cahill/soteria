@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import catalogFile from "../catalog/products.json" with { type: "json" };
 
 /**
  * The curated product catalog (INF-07). Consumers: the INF-04 database seed and
@@ -38,23 +37,26 @@ interface CatalogFile {
   products: CatalogProduct[];
 }
 
-export const CATALOG_PATH = fileURLToPath(
-  new URL("../catalog/products.json", import.meta.url),
-);
-
-/** Parse and return the catalog entries from raw JSON text. */
+/**
+ * Parse catalog entries from raw JSON text. Kept for callers that hold the file
+ * as text — the seed reads it from disk on the server.
+ */
 export function parseCatalog(raw: string): CatalogProduct[] {
   const data = JSON.parse(raw) as CatalogFile;
   return data.products;
 }
 
-/** Load the catalog from disk (defaults to the bundled `products.json`). */
-export function loadCatalog(path: string = CATALOG_PATH): CatalogProduct[] {
-  return parseCatalog(readFileSync(path, "utf8"));
-}
-
-/** The catalog, loaded once at module init. */
-export const products: CatalogProduct[] = loadCatalog();
+/**
+ * The catalog, imported as a module rather than read from disk.
+ *
+ * This package is shared by the browser and the server, so it must not depend
+ * on a Node built-in: `shared/` is "types and pure rule modules used by both"
+ * (IMPLEMENTATION_PLAN section 2). A `readFileSync` here — executed at module
+ * scope, no less — made every import of `@soteria/shared` fail in the browser.
+ * A JSON import is resolved by the bundler for the client and natively by Node
+ * on the server, so both tiers get the same data with no filesystem access.
+ */
+export const products: CatalogProduct[] = (catalogFile as CatalogFile).products;
 
 /** Look up a single product by `id`. */
 export function getProduct(id: string): CatalogProduct | undefined {

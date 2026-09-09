@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/components.css";
+import "./styles/password.css";
 
 import { App } from "./App";
 import { ToastProvider, applyStoredTheme } from "./components";

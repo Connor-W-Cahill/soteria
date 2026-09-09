@@ -5,7 +5,13 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import { describe, expect, it } from "vitest";
 
-import { CATALOG_PATH, loadCatalog, products } from "./catalog";
+import { parseCatalog, products } from "./catalog";
+
+// The test runs in Node, so reading the file here is fine — the point of #69 is
+// that the *module* must not.
+const CATALOG_PATH = fileURLToPath(
+  new URL("../catalog/products.json", import.meta.url),
+);
 
 const schema = JSON.parse(
   readFileSync(
@@ -64,7 +70,7 @@ describe("product catalog", () => {
     }
   });
 
-  it("loadCatalog reads the same file", () => {
-    expect(loadCatalog()).toEqual(products);
+  it("the imported catalog matches the file on disk", () => {
+    expect(parseCatalog(readFileSync(CATALOG_PATH, "utf8"))).toEqual(products);
   });
 });

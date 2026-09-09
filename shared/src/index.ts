@@ -7,3 +7,5 @@ export interface HealthResponse {
   version: string;
   dbConnected: boolean;
 }
+
+export * from "./password/hibp.js";
