@@ -10,6 +10,7 @@ const PasswordTools = lazy(() => import("./routes/PasswordTools"));
 const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 const SignIn = lazy(() => import("./routes/SignIn"));
 const Questionnaire = lazy(() => import("./routes/Questionnaire"));
+const Settings = lazy(() => import("./routes/Settings"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -41,6 +42,18 @@ export function App() {
               </RequireSession>
             }
           />
+          <Route
+            path="/settings"
+            element={
+              <RequireSession>
+                <Settings />
+              </RequireSession>
+            }
+          />
+          {/* Both real pages above are registered explicitly. /questionnaire is
+              also a NAV_ITEMS entry, so it is filtered out below to avoid a
+              second, placeholder registration; /settings is reached from the
+              account menu rather than the nav, so it needs no filter. */}
           {NAV_ITEMS.filter(
             (item) =>
               item.to !== "/password-tools" && item.to !== "/questionnaire",

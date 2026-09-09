@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import { z } from "zod";
 
+import { accountRouter } from "./account/routes.js";
 import { readAuthConfig, type AuthConfig } from "./auth/config.js";
 import { attachSession } from "./auth/middleware.js";
 import { authRouter } from "./auth/routes.js";
@@ -34,6 +35,8 @@ export interface AppOptions {
   auth?: AuthConfig;
   /** Overridable so route tests need neither Google nor a database. */
   authRouterOptions?: Omit<Parameters<typeof authRouter>[0], "config">;
+  /** Overridable so route tests need no database. */
+  accountRouterOptions?: Omit<Parameters<typeof accountRouter>[0], "config">;
   /** Overridable so route tests need no database. */
   loadSessionUser?: Parameters<typeof attachSession>[0]["loadUser"];
   /** Overridable so questionnaire route tests need no database. */
@@ -82,6 +85,7 @@ export function createApp(options: AppOptions = {}) {
   );
   app.use(authRouter({ config: auth, ...options.authRouterOptions }));
   app.use(questionnaireRouter(options.questionnaireRouterOptions));
+  app.use(accountRouter({ config: auth, ...options.accountRouterOptions }));
 
   app.get(
     "/api/health",
