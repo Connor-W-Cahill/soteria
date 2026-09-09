@@ -92,6 +92,26 @@ describe("findBreachCount", () => {
     expect(findBreachCount(`${suffix}:not-a-number`, suffix)).toBe(0);
   });
 
+  /**
+   * Guards against returning on the first match. If a padding line for a suffix
+   * arrives before that suffix's real entry, an early return reports a genuine
+   * breach as "not found" — the dangerous direction for a safety verdict.
+   */
+  it("takes the highest count when a suffix appears more than once", () => {
+    const zeroFirst = [
+      `${suffix}:0`,
+      "0018A45C4D1DEF81644B54AB7F969B88D65:0",
+      `${suffix}:4821`,
+    ].join("\r\n");
+
+    expect(findBreachCount(zeroFirst, suffix)).toBe(4821);
+
+    // Order must not matter.
+    const zeroLast = [`${suffix}:4821`, `${suffix}:0`].join("\r\n");
+
+    expect(findBreachCount(zeroLast, suffix)).toBe(4821);
+  });
+
   it("does not match a suffix that is merely a prefix of a line", () => {
     const other = `${suffix}AA:5`;
 

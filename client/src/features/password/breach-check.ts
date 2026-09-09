@@ -84,7 +84,10 @@ export async function checkPassword(
       // Ask HIBP to pad the response so its size does not leak how many
       // suffixes share this prefix.
       headers: { "Add-Padding": "true" },
-      // No credentials, no referrer: HIBP should learn nothing beyond the prefix.
+      // No credentials, no referrer. HIBP still sees the request's Origin —
+      // mandatory for the preflight that the custom Add-Padding header triggers —
+      // plus the caller's IP and user agent. What it learns nothing about beyond
+      // the 5-character prefix is the password itself.
       credentials: "omit",
       referrerPolicy: "no-referrer",
       cache: "no-store",
