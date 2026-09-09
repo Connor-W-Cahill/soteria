@@ -41,6 +41,11 @@ export interface Session {
   /** Exchange a Google ID token for a session cookie. */
   signIn: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * Delete this account and every row it owns (US-20). The server revokes the
+   * session before it deletes, so on return this browser is signed out.
+   */
+  deleteAccount: () => Promise<void>;
 }
 
 /** Set when a session is established, removed when it ends. Value is meaningless. */
@@ -149,6 +154,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      await apiJson<void>("/api/me", {
+        method: "DELETE",
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      });
+    } finally {
+      // Cleared even if the response never arrived: the server bumps
+      // token_version before it deletes, so by the time this call is in flight
+      // the cookie is already dead. Leaving the UI signed in would be a lie, and
+      // a stale hint self-heals anyway — the next `/api/me` probe returns
+      // `{ user: null }` and removes it. Same shape as `signOut`.
+      setUser(null);
+      writeHint(false);
+    }
+  }, []);
+
   const value = useMemo<Session>(
     () => ({
       status: user === null ? "anonymous" : "authenticated",
@@ -156,8 +178,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       loading,
       signIn,
       signOut,
+      deleteAccount,
     }),
-    [user, loading, signIn, signOut],
+    [user, loading, signIn, signOut, deleteAccount],
   );
 
   return (
