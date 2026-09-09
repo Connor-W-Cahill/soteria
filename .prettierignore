@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+package-lock.json
+docs/plan/issues.json
+docs/design/derive-seed.mjs
+docs/design/DESIGN_SEED.md
+docs/plan/IMPLEMENTATION_PLAN.md
+docs/plan/ISSUE_BACKLOG.md
+docs/plan/render-backlog.mjs

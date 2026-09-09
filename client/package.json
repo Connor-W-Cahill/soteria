@@ -1,0 +1,28 @@
+{
+  "name": "@soteria/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "playwright": "playwright test"
+  },
+  "dependencies": {
+    "@soteria/shared": "0.1.0",
+    "@tanstack/react-query": "^5.87.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/react": "^18.3.24",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^5.0.2",
+    "vite": "^7.1.4",
+    "vitest": "^5.0.0"
+  }
+}
