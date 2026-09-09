@@ -91,10 +91,10 @@ function StrengthCard({
 
       {result ? (
         <>
-          <p className="pw-analysis__headline">
+          <h4 className="pw-analysis__headline">
             {result.label}
             <span className="pw-result__body"> — {result.score} out of 4</span>
-          </p>
+          </h4>
           <div
             className={`pw-strength__meter pw-strength__meter--${SCORE_TONE[result.score]}`}
             aria-hidden="true"
@@ -147,14 +147,14 @@ function BreachCard({ status }: { status: BreachStatus | null }) {
         <p className="pw-result__body">Checking…</p>
       ) : status.state === "error" ? (
         <>
-          <p className="pw-analysis__headline">Breach status unavailable</p>
+          <h4 className="pw-analysis__headline">Breach status unavailable</h4>
           <p className="pw-result__body">
             {ERROR_TEXT[status.reason] ?? ERROR_TEXT.offline}
           </p>
         </>
       ) : status.state === "breached" ? (
         <>
-          <p className="pw-analysis__headline">Found in known breaches</p>
+          <h4 className="pw-analysis__headline">Found in known breaches</h4>
           <p className="pw-result__body">
             This password appears{" "}
             <strong>{status.count.toLocaleString()}</strong>{" "}
@@ -165,7 +165,7 @@ function BreachCard({ status }: { status: BreachStatus | null }) {
         </>
       ) : (
         <>
-          <p className="pw-analysis__headline">Not found in known breaches</p>
+          <h4 className="pw-analysis__headline">Not found in known breaches</h4>
           <p className="pw-result__body">
             This password is not in Have I Been Pwned&rsquo;s collection. That
             does not mean it is hard to guess — check the estimate above.

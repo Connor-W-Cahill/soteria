@@ -145,6 +145,44 @@ test.describe("US-04 password analysis", () => {
     for (const entry of external) expect(entry).not.toContain(STRONG);
   });
 
+  test("loads zxcvbn's chunks under the client CSP with no violation (#81)", async ({
+    page,
+  }) => {
+    // zxcvbn and its wordlists arrive as same-origin dynamic-import() chunks;
+    // `script-src 'self'` must allow them. Prove it rather than assume it.
+    const cspViolations: string[] = [];
+    page.on("console", (message) => {
+      if (/content security policy|refused to/i.test(message.text())) {
+        cspViolations.push(message.text());
+      }
+    });
+    const zxcvbnRequests: string[] = [];
+    await stubHibp(page, false);
+    await page.goto("/password-tools");
+    page.on("request", (request) => {
+      if (/zxcvbn/i.test(request.url())) {
+        zxcvbnRequests.push(request.url());
+      }
+    });
+
+    await page.getByLabel("Password to check").fill(STRONG);
+    await page.getByRole("button", { name: "Check password" }).click();
+
+    // The strength card renders a real score → zxcvbn actually executed.
+    await expect(
+      page.locator(".pw-analysis__card").filter({
+        has: page.getByRole("heading", {
+          name: "Strength (estimated locally)",
+        }),
+      }),
+    ).toContainText("out of 4");
+
+    expect(cspViolations).toEqual([]);
+    // zxcvbn's code was fetched over the network (a same-origin script the CSP
+    // allowed), i.e. it really is lazy-loaded and really did run.
+    expect(zxcvbnRequests.length).toBeGreaterThan(0);
+  });
+
   for (const theme of ["light", "dark"] as const) {
     test(`no axe violations with results shown (${theme})`, async ({
       page,
