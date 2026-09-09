@@ -1,5 +1,6 @@
 import { BreachChecker } from "../features/password/BreachChecker";
 import { PasswordGenerator } from "../features/password/PasswordGenerator";
+import { PassphraseGenerator } from "../features/password/PassphraseGenerator";
 
 /**
  * `/password-tools`. The breach checker (US-01) and the random password
@@ -16,6 +17,7 @@ export default function PasswordTools() {
       </p>
       <BreachChecker />
       <PasswordGenerator />
+      <PassphraseGenerator />
     </div>
   );
 }
