@@ -55,6 +55,15 @@ export function createApp(options: AppOptions = {}) {
     app.use(globalRateLimit());
   }
 
+  // JSON only, deliberately. This is load-bearing for more than convenience:
+  // the only thing preventing login CSRF on POST /api/auth/google is that a
+  // cross-site HTML form cannot produce a body express.json() will parse. A
+  // security review confirmed it — form posts with text/plain,
+  // application/x-www-form-urlencoded and multipart/form-data all get 400
+  // validation_failed and set no cookie. Adding express.urlencoded() here, a
+  // one-line change nobody would think to flag, makes login CSRF live
+  // immediately. If a route ever needs form bodies, mount the parser on that
+  // route and add an origin check or a CSRF token to the auth routes first.
   app.use(express.json({ limit: "100kb" }));
 
   const auth = options.auth ?? readAuthConfig();

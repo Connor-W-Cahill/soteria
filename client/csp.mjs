@@ -27,6 +27,35 @@
  * by US-15's anonymity tests rather than merely intended.
  */
 
+/**
+ * The Soteria API's origin, when it is not the same origin as the document.
+ *
+ * US-14 is the first feature whose client must reach Soteria's own backend —
+ * every earlier one was browser-only (HIBP direct, local generators) — and the
+ * pinned policy did not permit it, so every auth call was refused by the browser
+ * before it was made. That was found by an independent security review, not by a
+ * test, because the tests pinned the broken list.
+ *
+ * Derived from `VITE_API_URL` rather than hard-coded, so this stays correct on
+ * both sides of the same-origin move tracked as a blocking bug: when the API is
+ * served from the document's own origin, `VITE_API_URL` is empty, nothing is
+ * added, and `'self'` is the whole answer.
+ */
+function apiOrigin(env = process.env) {
+  const raw = env.VITE_API_URL?.trim();
+
+  if (raw === undefined || raw === "") return [];
+
+  try {
+    return [new URL(raw).origin];
+  } catch {
+    // A malformed value must not silently widen or narrow the policy.
+    throw new Error(`VITE_API_URL is not a valid absolute URL: ${raw}`);
+  }
+}
+
+export const API_ORIGIN = apiOrigin();
+
 /** Directives common to both policies, in a fixed order. */
 const COMMON = {
   "default-src": ["'self'"],
@@ -42,6 +71,7 @@ const COMMON = {
   // only, and only from /signin — ADR-0008.
   "connect-src": [
     "'self'",
+    ...API_ORIGIN,
     "https://api.pwnedpasswords.com",
     "https://accounts.google.com",
   ],

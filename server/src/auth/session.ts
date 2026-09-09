@@ -66,6 +66,11 @@ export async function verifySessionToken(
       algorithms: [SESSION_ALGORITHM],
       issuer: SESSION_ISSUER,
       audience: SESSION_AUDIENCE,
+      // jose does not require `exp` unless asked. Without this a hand-signed
+      // token that simply omits the claim verifies and never expires, so the
+      // 7-day bound would be a property of issueSessionToken alone rather than
+      // of anything we check on the way in.
+      requiredClaims: ["exp"],
     });
 
     const userId = payload.sub;
