@@ -68,6 +68,13 @@
   --control-height: 36px;
 }
 
+/* Touch — precedence over the desktop control height */
+@media (max-width: 767px) {
+  :root {
+    --control-height: var(--touch-target);
+  }
+}
+
 /* Dark — same hue and chroma, lightness inverted via darkL() */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {

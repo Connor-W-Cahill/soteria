@@ -227,15 +227,37 @@ export function BreachChecker() {
   const [busy, setBusy] = useState(false);
   const inputId = useId();
   const requestRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Clear every trace of the password when the component goes away, so
-  // navigating off the page does not leave it in a retained React tree.
+  /**
+   * Retire the check that is currently in flight, if any.
+   *
+   * Bumping the counter is what makes the staleness guard in `onSubmit`
+   * reachable: without it, a second submit is impossible while `busy` is true,
+   * so the counter never advanced and the guard could never be false. Aborting
+   * as well means the superseded range request is cancelled rather than merely
+   * ignored.
+   */
+  function supersedeInFlight(): boolean {
+    if (abortRef.current === null) {
+      return false;
+    }
+
+    requestRef.current += 1;
+    abortRef.current.abort();
+    abortRef.current = null;
+
+    return true;
+  }
+
+  // Drop an in-flight check when the component goes away. Note this effect does
+  // not clear the password: `setPassword("")` on an unmounting component is
+  // discarded by React. The value is gone because the tree is gone, which the
+  // navigation test covers.
   useEffect(() => {
     return () => {
-      setPassword("");
-      setBreach(null);
-      setStrength(null);
-      setStrengthFailed(false);
+      abortRef.current?.abort();
+      abortRef.current = null;
     };
   }, []);
 
@@ -252,21 +274,34 @@ export function BreachChecker() {
       return;
     }
 
+    supersedeInFlight();
+
     const request = ++requestRef.current;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setBusy(true);
     clearResults();
 
     const [breachOutcome, strengthOutcome] = await Promise.allSettled([
-      checkPassword(password),
+      checkPassword(password, { signal: controller.signal }),
       estimateStrength(password),
     ]);
 
-    // Ignore results that a newer check has superseded.
+    // Discard results that an edit or a newer check has superseded. Rendering
+    // them would show a verdict for a password the field no longer holds — and
+    // in the dangerous direction, a "safe" reading for a value that was never
+    // fully checked. Whoever superseded this request owns `busy` from here on.
     if (request !== requestRef.current) {
       return;
     }
 
+    abortRef.current = null;
+
+    // An aborted breach check resolves to an error result (see breach-check.ts);
+    // `verdictFor` reads any error/absent breach as "could not be checked",
+    // never as "safe", so a discarded network round trip cannot become a
+    // reassuring verdict on strength alone.
     setBreach(
       breachOutcome.status === "fulfilled"
         ? breachOutcome.value
@@ -317,6 +352,13 @@ export function BreachChecker() {
               onChange={(event) => {
                 setPassword(event.target.value);
                 clearResults();
+
+                // Editing the password retires any check still running for the
+                // previous value, and releases the control so the new value can
+                // be checked straight away.
+                if (supersedeInFlight()) {
+                  setBusy(false);
+                }
               }}
               autoComplete="off"
               autoCorrect="off"
