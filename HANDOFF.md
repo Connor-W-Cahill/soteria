@@ -1,8 +1,8 @@
 # Soteria handoff
 
-Last updated 2026-09-08 by the Claude Opus lead, restarting the session at the
-start of Phase 2. Written for the next lead — read this before touching
-anything, then read `docs/plan/IMPLEMENTATION_PLAN.md` sections 2, 3 and 5, and
+Last updated 2026-09-09 by the Claude Opus lead: Phase 2 closed, Phase 3 in flight. Written
+for the next lead — read this before touching anything, then read
+`docs/plan/IMPLEMENTATION_PLAN.md` sections 2, 3 and 5, and
 `docs/plan/AGENT_RUNBOOK.md`.
 
 ## Where things stand
@@ -12,69 +12,98 @@ workspaces scaffold, the seeded design system, the twelve-table Azure SQL schema
 with migrations and seeds, the product catalog, the shared HTTP conventions, and
 the Azure infrastructure-as-code.
 
-**Phase 2 (anonymous password tools) is in progress.** Issues #19 US-01, #20
-US-02, #21 US-03, #22 US-04, #23 US-05, #24 US-15.
+**Phase 2 (anonymous password tools) is complete and epic #2 is closed.** All
+six issues are closed by merged PRs and `main` is green — lint, typecheck, unit
+tests and the full Playwright suite, which now actually reaches Playwright in CI
+(for part of the phase `npm test` failed first, so the e2e step never ran).
 
-### The open PR stack — read this before opening anything
+| Issue     | Work                           | PR            |
+| --------- | ------------------------------ | ------------- |
+| #19 US-01 | Private breach check           | #71 (via #70) |
+| #20 US-02 | Random password generator      | #72           |
+| #21 US-03 | Passphrase generator           | #86           |
+| #22 US-04 | Explain password results       | #91           |
+| #23 US-05 | Explain password privacy       | #85           |
+| #24 US-15 | Use password tools anonymously | #97           |
 
-```
-main
- └── #70  fix/69-shared-browser-safe   ← the gate. Mergeable, CI green.
-      ├── (US-01 #71 already merged into this branch)
-      └── #72  feat/US-02-password-generator   ← CONFLICTING, worker is on it
-```
+**Phase 3 (Google sign-in, account deletion) is in flight.**
 
-**#70 is the one to merge first.** It carries both the `@soteria/shared`
-browser-safety fix (#69) _and_ all of US-01, because #71 was merged into it
-rather than into `main`. Merging #70 lands US-01 on `main` and closes **#19 and
-#69 together**.
+| Issue     | Work                    | PR                      | State                               |
+| --------- | ----------------------- | ----------------------- | ----------------------------------- |
+| #25 US-14 | Sign in with Google     | #105                    | **green, held for security review** |
+| #26 US-20 | Delete account          | worker, stacked on #105 | in progress                         |
+| #27 US-16 | Questionnaire (Phase 4) | worker, stacked on #105 | in progress                         |
 
-### Careful: merging a PR into its base branch does not close its issue
+**#105 is green but deliberately unmerged.** Issue #25 carries `review:security`
+and its acceptance criteria require an independent review of session handling
+before merge. The lead wrote the PR, so an Opus reviewer with fresh context was
+launched against it (worktree `soteria-review-us14`). Read its comment on #105
+before merging, and fix what it finds — US-01's review found five real defects
+this way.
 
-This has now bitten three times (#15, #16, #19). When a stacked PR is merged into
-its base branch rather than into `main`, GitHub does not fire its `Closes #n`
-link. The issue stays open even though the work is done. Check for this before
-assuming an issue is unstarted — verify the files are on `main` first, then close
-by hand with a comment saying why.
+### Merging is no longer humans-only
+
+Connor lifted that rule on 2026-09-09: "i give you permission to merge your own
+prs". Branch protection wants one approving review and GitHub forbids
+self-approval, so the route is `gh pr merge <n> --squash --admin
+--delete-branch` (`enforce_admins` is false on this repo). **Merge only what is
+actually green**, and keep commenting on the issue when a PR opens and merges.
+
+He also lifted the two-worker cap, globally: `~/.local/bin/ai-task` no longer
+hard-fails at three sibling panes (set `AI_TASK_MAX_PANES` to reinstate one),
+and the rule in `~/.claude/CLAUDE.md` was rewritten to match.
+
+### The US-01 security review produced five tracked issues
+
+The review of US-01 found real defects rather than style notes. All five were
+filed and all but #80 are closed: **#79** stale verdict (fixed, #88), **#80**
+the leak proof did not observe deferred exfiltration (fixed in #98, rides on
+#97), **#81** no client CSP (fixed, #95), **#82** 36x36 touch targets below
+768px (fixed, #93), **#83** `findBreachCount` returned the first match rather
+than the maximum, plus an overstated privacy comment (fixed, #89).
+
+Take future security reviews equally seriously. Every finding was reproducible
+by execution.
 
 ## Agents that were running when this session ended
 
-**Do not kill these and do not delete their worktrees.** They were left alive
-deliberately; they have uncommitted work.
+Three, all Claude, all with their own worktree. **Read their panes before
+restarting anything.**
 
-| Agent            | Pane    | Worktree                                   | Doing                    |
-| ---------------- | ------- | ------------------------------------------ | ------------------------ |
-| `impl-soteria`   | `w5:pB` | `/home/connor/Work/CS330/soteria-us02`     | US-02 (#20), PR #72      |
-| `review-soteria` | `w5:pC` | `/home/connor/Work/CS330/soteria-review01` | Security review of US-01 |
+| Agent            | Pane    | Worktree                                      | Doing                   |
+| ---------------- | ------- | --------------------------------------------- | ----------------------- |
+| `impl-soteria`   | `w5:pF` | `/home/connor/Work/CS330/soteria-us20`        | US-20 (#26), on #105    |
+| `impl-soteria-3` | `w5:pG` | `/home/connor/Work/CS330/soteria-us16`        | US-16 (#27), on #105    |
+| `review-soteria` | `w5:pH` | `/home/connor/Work/CS330/soteria-review-us14` | Security review of #105 |
 
-Both were started from the old task tab (`w5:t4`). `ai-task status` still lists
-them; `herdr pane read <id> --source recent --lines 40` shows what they are
-doing. Adopt their output rather than restarting them.
+Both implementation branches are stacked on `feat/US-14-google-signin`, so they
+must merge that branch in whenever it moves, and their PRs are based on it rather
+than on `main`.
 
-- **PR #72 (US-02) is CONFLICTING.** Its base branch moved when US-01 merged into
-  it, and both touch `client/src/App.tsx`, `client/src/main.tsx` and
-  `shared/src/index.ts`. The worker was told to merge its base in. If it does not,
-  the resolution is straightforward: US-01 owns the `/password-tools` route and
-  the `BreachChecker`; US-02 adds a second section to the same page. Keep both.
-- **The US-01 security review was retargeted to #70**, because #71 merged while
-  the review was running. Expect its findings there, framed as a US-01 review.
-  Findings on US-01 are the lead's to fix, not the reviewer's.
+There are also stale worktrees under `/home/connor/Work/CS330/` from Phase 2
+(`soteria-fix79`, `-fix80`, `-fix82`, `-fix83`, `-fix84`, `-fix90`, `-fix94`,
+`-fix99`, `-fix101`, `-us02`, `-us03`, `-us04`, `-us05`, `-csp`, `-fix75`). All
+are pushed and merged; `git worktree remove` them.
 
 ## What to do next, in dependency order
 
-1. **Adopt the two running agents.** Read their panes; do not re-launch them.
-2. **Address the US-01 security review findings on #70** when they land. The last
-   such review found four real defects by executing probes; assume this one is
-   also worth acting on rather than acknowledging.
-3. **Get #70 merged** (a human merges; agents never do). That unblocks everything.
-4. **Then, in this order:** #21 US-03 (needs US-02), #22 US-04 and #23 US-05 (both
-   need US-01), #24 US-15 (needs US-01, US-02, US-03).
-   - US-04 needs `@zxcvbn-ts/core`, running locally in the browser.
-   - US-05 is a `/learn/password-privacy` page plus an inline "How this works"
-     disclosure. The `BreachChecker` already links to that route, so the link is
-     currently dead — US-05 fixes that.
-   - US-15 asserts anonymity: fresh context, zero `Set-Cookie`, no `/api/` calls.
-5. Two workers maximum, plus a reviewer slot for `review:security` issues.
+1. **Read the security review on #105 and act on it.** Do not merge until you
+   have. Findings on US-14 are the lead's to fix, not the reviewer's.
+2. **Merge #105.** It unblocks both workers and every remaining phase — every
+   downstream issue depends on #25 either directly or through #51.
+3. **Then the workers' PRs** for #26 and #27, rebasing each onto `main`.
+4. **US-17 (#28), the scoring engine, is the lead's** per the plan, and it needs
+   US-16's question set — the worker was told to report its question ids and
+   categories. #29 and #30 then follow from #28.
+5. **US-14 has two unverifiable claims** that a human must close out. Nothing
+   here has run against real Google or a real database: token verification is
+   tested against a stubbed `OAuth2Client`, so the first real sign-in will be the
+   first exercise of `upsertGoogleUser`. And production is still unprovisioned,
+   so `infra/deploy.sh`'s new `GOOGLE_CLIENT_ID` / `SESSION_SECRET` settings are
+   an unexercised code path.
+6. **The Azure provisioning task below is still outstanding** and still
+   human-only. It has been outstanding since Phase 1, and US-14 added two
+   secrets to it.
 
 ## The traps this session hit, so you do not repeat them
 
@@ -102,6 +131,58 @@ doing. Adopt their output rather than restarting them.
    simulating an insecure context, and a regression guard's regex did not
    actually match `from "node:fs"` and would have guarded nothing. After writing
    a guard, break the thing it guards and confirm it fails.
+7. **Playwright silently tested the wrong worktree for most of Phase 2** (#84).
+   `client/playwright.config.ts` hardcoded port 5173 with
+   `reuseExistingServer: true`, so a run in one worktree attached to another
+   worktree's dev server and verified source it was not testing. The config now
+   derives a per-worktree port from a hash of `cwd`, scans upward for a free one,
+   and sets `reuseExistingServer: false`. Two follow-on traps came out of this:
+   the derived port must be _probed_, not trusted (three worktrees collided on
+   5368, #94), the probe must bind **both** `127.0.0.1` and `[::1]` or it reports
+   a squatted port free, and the chosen port must be pinned into
+   `process.env.SOTERIA_E2E_PORT` because Playwright evaluates the config in the
+   main process _and_ in every worker.
+8. **`getByText` matches case-insensitive substrings.** "Not found in known
+   breaches" matches a locator for "Found in known breaches". Use
+   `getByRole("heading", { name, exact: true })` for verdict assertions.
+9. **An aborted request fires no `response` event**, so `waitForResponse` hangs
+   for the full timeout precisely when an abort-based fix is working. Poll a
+   handler-completion flag instead, and treat a throwing `route.fulfill` as the
+   passing path.
+10. **Chromium strips `Set-Cookie` from the response headers it reports to
+    Playwright.** Any anonymity proof built on `headersArray()` is blind;
+    `context.cookies()` is the real detector. Also, a cookie fulfilled on a
+    cross-origin stub is rejected outright, so that probe proves nothing either.
+    Both facts are documented in `client/e2e/support/anonymity.ts`.
+11. **Four EFF large-wordlist entries are hyphenated** — `drop-down`, `felt-tip`,
+    `t-shirt`, `yo-yo` — and `-` is an offered passphrase separator. Three tests
+    split a phrase on its separator and asserted each fragment was a list entry,
+    which flaked ~10% of shared-suite runs (#99). `passphrase.test.ts` now has a
+    `segment()` helper that recovers the words actually drawn. **A single green
+    run does not clear a flake**: the first fix for #99 passed once and then
+    failed 6 of 30 runs, which is how the third affected test was found.
+12. **Ordinary English words make terrible needles.** The US-03 leak proof
+    matched each passphrase word as a substring of every request line, and
+    collided with the app's own traffic: `theme` in `/theme-init.js`, `runt` in
+    `react_jsx-dev-runtime.js`, and `display`, `family` and `unit` (inside
+    `Nunito`) in the Google Fonts query string (#101). The fix subtracts a
+    baseline of carriers snapshotted at runtime rather than hand-listing
+    exclusions, because a hand-written list goes stale and the flake comes back.
+13. **`git checkout <file>` to revert a mutation reverts your real work too.**
+    While break-testing US-14 I reverted `AppShell.tsx` to undo an injected
+    mutation and lost the account menu with it. Copy the file to /tmp before
+    mutating it and copy it back, the way the other probes in this session did.
+14. **Run the guards that only CI can run.** `schema.integration.test.ts` needs a
+    live SQL Server and skips without `DATABASE_URL`; there is no Docker on this
+    machine, so it runs only in CI's `db-migrations` job. It caught US-14's
+    `users.token_version` against its credential-column pattern — which is the
+    guard working. Do not widen that pattern to pass; add a named exception with
+    a reason and pin the column's type, or the exception becomes the hole.
+15. **A test can pass because the dependency is strict, not because you are.**
+    US-14 pinned the JWT algorithm and had an `alg: none` test to prove it. The
+    test stayed green with the pin removed, because jose refuses unsigned tokens
+    on its own. An HS512-signed token is the case that actually exercises the
+    pin. Mutate, or you are testing your library's reputation.
 
 ## The one human-only task still outstanding
 
@@ -123,7 +204,9 @@ health gate proves it worked: it fails unless the live `/api/health` reports
 
 ## Non-negotiable constraints
 
-- One issue per branch and PR; **never merge**. Humans merge.
+- One issue per branch and PR. Merging is now allowed (see above), but only
+  what is genuinely green, and never a PR whose issue asks for a review it has
+  not had.
 - Anything not covered by an existing issue gets a new `type:chore` or
   `type:bug` issue _before_ the work starts.
 - Every commit ends with `AI-Assisted: Codex` or `AI-Assisted: Claude`.

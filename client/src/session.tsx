@@ -170,7 +170,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       writeHint(false);
     }
   }, []);
-
   const value = useMemo<Session>(
     () => ({
       status: user === null ? "anonymous" : "authenticated",
