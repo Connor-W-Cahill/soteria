@@ -5,6 +5,7 @@ import { EmptyState } from "./components";
 
 const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
+const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -22,6 +23,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/password-tools" element={<PasswordTools />} />
+          <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
             (item) => (
               <Route
