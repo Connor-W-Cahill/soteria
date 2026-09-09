@@ -269,3 +269,223 @@ test.describe("US-17 posture scores", () => {
     expect(overflow).toBe(false);
   });
 });
+
+/**
+ * US-18 — the disclosure of what makes up each category score.
+ *
+ * The arithmetic and the reason strings are the engine's; these tests pin the
+ * browser-only behaviour: that a real disclosure button toggles `aria-expanded`,
+ * that the reason strings reach the screen verbatim, that the improvement hint
+ * links somewhere, and that the `no_cve_data` note is not rendered as
+ * "0 of 0 points".
+ */
+function scoresWithContributions() {
+  return categoryScores().map((category) => {
+    if (category.key === "password_hygiene") {
+      return {
+        ...category,
+        score: 50,
+        contributions: [
+          {
+            sourceId: "pw_reuse",
+            label: "How do you handle passwords across your accounts?",
+            delta: 1,
+            maxDelta: 4,
+            reason:
+              'You answered "A few passwords I reuse", worth 1 of 4 points here.',
+          },
+          {
+            sourceId: "pw_length",
+            label: "How long are the passwords you choose?",
+            delta: 4,
+            maxDelta: 4,
+            reason:
+              'You answered "16 characters or more", which is the strongest option for this question.',
+          },
+        ],
+      };
+    }
+
+    if (category.key === "software_exposure") {
+      return {
+        ...category,
+        contributions: [
+          {
+            sourceId: "sw_auto_update",
+            label: "Are automatic updates enabled on your main computer?",
+            delta: 2,
+            maxDelta: 4,
+            reason:
+              'You answered "For the operating system only", worth 2 of 4 points here.',
+          },
+          {
+            sourceId: "software_exposure.no_cve_data",
+            label: "Known vulnerabilities in your software",
+            delta: 0,
+            maxDelta: 0,
+            reason:
+              "This category will also account for known vulnerabilities affecting the software you list. That check is not part of this build yet, so this score reflects your answers only.",
+          },
+        ],
+      };
+    }
+
+    return category;
+  });
+}
+
+const CONTRIB_BODY = {
+  categories: scoresWithContributions(),
+  overall: 70,
+  provisional: true,
+  version: "1.0.0",
+  updatedAt: "2026-09-09T12:00:00.000Z",
+};
+
+test.describe("US-18 score contribution disclosure", () => {
+  test("each card discloses its contributions behind a button", async ({
+    page,
+  }) => {
+    await signedInWithScores(page, CONTRIB_BODY);
+    await page.goto("/scores");
+
+    const card = page
+      .locator(".sot-spark")
+      .filter({ hasText: "Password habits" });
+    const toggle = card.getByRole("button", {
+      name: /how this score is calculated/i,
+    });
+
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(
+      card.getByText('You answered "A few passwords I reuse", worth 1 of 4'),
+    ).toBeHidden();
+
+    await toggle.click();
+
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      card.getByText(
+        'You answered "A few passwords I reuse", worth 1 of 4 points here.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      card.getByText("1 of 4 points", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      card.getByRole("link", { name: /open the password tools/i }),
+    ).toBeVisible();
+    // The perfect answer is flagged, not linked to an improvement.
+    await expect(card.getByText(/already the strongest answer/i)).toBeVisible();
+  });
+
+  test("the button controls the panel it toggles", async ({ page }) => {
+    await signedInWithScores(page, CONTRIB_BODY);
+    await page.goto("/scores");
+
+    const card = page
+      .locator(".sot-spark")
+      .filter({ hasText: "Password habits" });
+    const toggle = card.getByRole("button", {
+      name: /how this score is calculated/i,
+    });
+
+    const panelId = await toggle.getAttribute("aria-controls");
+    expect(panelId).toBeTruthy();
+
+    const panel = page.locator(`[id="${panelId}"]`);
+    await expect(panel).toBeHidden();
+
+    await toggle.click();
+    await expect(panel).toBeVisible();
+  });
+
+  test("opens with Enter and closes with Space", async ({ page }) => {
+    await signedInWithScores(page, CONTRIB_BODY);
+    await page.goto("/scores");
+
+    const toggle = page
+      .locator(".sot-spark")
+      .filter({ hasText: "Password habits" })
+      .getByRole("button", { name: /how this score is calculated/i });
+
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    await page.keyboard.press(" ");
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("renders the no-CVE-data note as a note, not as 0 of 0 points", async ({
+    page,
+  }) => {
+    await signedInWithScores(page, CONTRIB_BODY);
+    await page.goto("/scores");
+
+    const card = page
+      .locator(".sot-spark")
+      .filter({ hasText: "Software exposure" });
+
+    await card
+      .getByRole("button", { name: /how this score is calculated/i })
+      .click();
+
+    await expect(
+      card.getByText(/known vulnerabilities affecting the software you list/i),
+    ).toBeVisible();
+    await expect(card.getByText(/0 of 0 points/)).toHaveCount(0);
+  });
+
+  for (const theme of ["light", "dark"] as const) {
+    test(`stays axe-clean with a panel open (${theme})`, async ({ page }) => {
+      await signedInWithScores(page, CONTRIB_BODY);
+      await page.goto("/scores");
+
+      if (theme === "dark") {
+        await page.evaluate(() => {
+          document.documentElement.dataset.theme = "dark";
+        });
+      }
+
+      await page
+        .locator(".sot-spark")
+        .filter({ hasText: "Password habits" })
+        .getByRole("button", { name: /how this score is calculated/i })
+        .click();
+
+      await expect(
+        page.getByText(/already the strongest answer/i),
+      ).toBeVisible();
+
+      const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+
+      expect(results.violations).toEqual([]);
+    });
+  }
+
+  test("no horizontal scroll at 375px with a panel open", async ({ page }) => {
+    await signedInWithScores(page, CONTRIB_BODY);
+    await page.setViewportSize({ width: 375, height: 780 });
+    await page.goto("/scores");
+
+    await page
+      .locator(".sot-spark")
+      .filter({ hasText: "Software exposure" })
+      .getByRole("button", { name: /how this score is calculated/i })
+      .click();
+
+    await expect(
+      page.getByText(/known vulnerabilities affecting the software you list/i),
+    ).toBeVisible();
+
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    );
+
+    expect(overflow).toBe(false);
+  });
+});
