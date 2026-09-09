@@ -47,7 +47,13 @@ function isAllowedThirdParty(url: string): boolean {
 
 export interface AnonymityRecorder {
   requests: SeenRequest[];
-  /** Every value seen in a `Set-Cookie` response header. */
+  /**
+   * Values seen in a `Set-Cookie` response header.
+   *
+   * Usually empty even when a cookie is set, because Chromium strips
+   * `Set-Cookie` from reported response headers. Do not treat this as the cookie
+   * detector; `context.cookies()` is.
+   */
   setCookieHeaders: string[];
   /** Wait out deferred exfiltration, close the page, then stop recording. */
   settle: (page: Page, opts?: { quietMs?: number }) => Promise<void>;
@@ -68,11 +74,13 @@ export function recordAnonymity(context: BrowserContext): AnonymityRecorder {
   };
   const onResponse = async (response: import("@playwright/test").Response) => {
     try {
-      const headers = await response.allHeaders();
-      const raw = headers["set-cookie"];
-      if (raw) setCookieHeaders.push(raw);
+      // headersArray() preserves repeated headers and the raw `Set-Cookie`
+      // name; the object forms fold or drop it.
+      for (const { name, value } of await response.headersArray()) {
+        if (name.toLowerCase() === "set-cookie") setCookieHeaders.push(value);
+      }
     } catch {
-      // Response body/headers can be unavailable if the page is already gone.
+      // Headers can be unavailable if the page is already gone.
     }
   };
 
@@ -110,9 +118,15 @@ export function recordAnonymity(context: BrowserContext): AnonymityRecorder {
         `unexpected third-party requests: ${JSON.stringify(strangers)}`,
       ).toEqual([]);
 
-      // 3. Nothing set a cookie — not via a response header...
+      // 3. Nothing set a cookie.
+      //
+      // context.cookies() is the check that does the work here. The header scan
+      // is belt-and-braces and must not be relied on: Chromium does not report
+      // Set-Cookie in response headers, so headersArray() sees nothing even when
+      // a cookie really is set. Verified by injecting a first-party
+      // Set-Cookie — the cookie assertion below caught it and the header
+      // assertion above did not.
       expect(setCookieHeaders).toEqual([]);
-      // ...and not by any other means.
       expect(await context.cookies()).toEqual([]);
 
       // 4. No service worker was registered (it could carry traffic later).

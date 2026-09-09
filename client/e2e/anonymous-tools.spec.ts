@@ -75,15 +75,20 @@ test.describe("US-15 anonymous password tools", () => {
     page,
   }) => {
     await page.goto("/password-tools");
-    const primary = page.getByRole("navigation", {
-      name: "Primary",
-      exact: true,
-    });
 
-    await expect(
-      primary.getByRole("link", { name: "Password Tools" }),
-    ).toBeVisible();
-    await expect(primary.getByRole("link", { name: "Learn" })).toBeVisible();
+    // Viewport-agnostic: the desktop bar (nav "Primary") and the mobile tab bar
+    // (nav "Primary mobile") both render the visible items; only one is shown at
+    // a time, so assert on the visible link and on DOM presence, not on a
+    // single nav.
+    const visibleLink = (name: string) =>
+      page.getByRole("link", { name, exact: true }).filter({ visible: true });
+
+    await expect(visibleLink("Password Tools")).toHaveCount(1);
+    await expect(visibleLink("Learn")).toHaveCount(1);
+    // The kept tab really navigates.
+    await visibleLink("Learn").click();
+    await expect(page).toHaveURL(/\/learn$/);
+    await page.goBack();
 
     for (const hidden of [
       "Dashboard",
@@ -91,7 +96,9 @@ test.describe("US-15 anonymous password tools", () => {
       "Software",
       "Recommendations",
     ]) {
-      await expect(primary.getByRole("link", { name: hidden })).toHaveCount(0);
+      await expect(
+        page.getByRole("link", { name: hidden, exact: true }),
+      ).toHaveCount(0);
     }
 
     // No "signed in" affordances either.
