@@ -37,6 +37,29 @@ describe("randomInt — rejection sampling / no modulo bias", () => {
     expect(() => randomInt(3.5)).toThrow(RangeError);
   });
 
+  /**
+   * Deliberately a heavy statistical test, so it carries an explicit timeout
+   * instead of relying on vitest's 5 s default.
+   *
+   * It draws 400,000 samples and took about 5.3 s, so it sat permanently on the
+   * edge of that default and failed with "Test timed out in 5000ms" — never an
+   * assertion — in roughly 3 runs out of 10 on a loaded machine (#90).
+   *
+   * The sample count is deliberately NOT reduced. All three checks below need it.
+   * A naive `byte % 95` over-represents indices 0..65 (three hits per 256 bytes)
+   * against 66..94 (two), and the resulting worst-case per-index deviation grows
+   * linearly with the sample count while the 9-sigma bound grows only as its
+   * square root:
+   *
+   *   samples   9-sigma bound   worst bias deviation
+   *   100,000   290.5           271.4   -> 8.4 sigma, MISSED
+   *   200,000   410.8           542.8   -> 11.9 sigma
+   *   400,000   580.9           1085.5  -> 16.8 sigma
+   *
+   * So dropping to 100,000 to make the test quick would silently take the
+   * max-deviation check below its own threshold — it would still pass on biased
+   * output. Only the timeout was wrong, so only the timeout is changed.
+   */
   it("is uniform for an alphabet size that does not divide 256", () => {
     // 95 = number of printable ASCII glyphs; 256 % 95 === 66, so a naive
     // `byte % 95` would hit indices 0..65 three times per 256 bytes and
@@ -73,7 +96,7 @@ describe("randomInt — rejection sampling / no modulo bias", () => {
     const perItemLow = lowHalf / 47;
     const perItemHigh = highHalf / (max - 47);
     expect(Math.abs(perItemLow - perItemHigh) / expected).toBeLessThan(0.05);
-  });
+  }, 30_000);
 });
 
 describe("generatePassword — length bounds", () => {
