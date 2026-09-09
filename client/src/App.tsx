@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AppShell, NAV_ITEMS } from "./components/AppShell";
+import { AppShell, homePathFor, NAV_ITEMS } from "./components/AppShell";
 import { EmptyState } from "./components";
+import { useSession } from "./session";
 
 const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
@@ -17,11 +18,15 @@ function Placeholder({ title }: { title: string }) {
 }
 
 export function App() {
+  const { status } = useSession();
   return (
     <AppShell>
       <Suspense fallback={<p>Loading…</p>}>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/"
+            element={<Navigate to={homePathFor(status)} replace />}
+          />
           <Route path="/password-tools" element={<PasswordTools />} />
           <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
