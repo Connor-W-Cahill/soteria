@@ -16,6 +16,20 @@ LOCATION="${2:-eastus2}"
 NAME_PREFIX="${NAME_PREFIX:-soteria}"
 SQL_ADMIN_LOGIN="${SQL_ADMIN_LOGIN:-soteriaadmin}"
 
+# US-14 sign-in. The API refuses to start without both, so they are set here
+# rather than left for someone to discover from a crash loop. Pass the client id
+# in the environment; the session secret is generated unless one is supplied, so
+# the default path never involves a human choosing a key.
+GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
+SESSION_SECRET="${SESSION_SECRET:-$(openssl rand -base64 48)}"
+
+if [[ -z "$GOOGLE_CLIENT_ID" ]]; then
+  echo "GOOGLE_CLIENT_ID is not set." >&2
+  echo "Create a Web application OAuth client (docs/deploy.md section 3) and re-run:" >&2
+  echo "  GOOGLE_CLIENT_ID=<id> ./infra/deploy.sh $RESOURCE_GROUP $LOCATION" >&2
+  exit 1
+fi
+
 read -rsp "Azure SQL administrator password for '${SQL_ADMIN_LOGIN}': " SQL_ADMIN_PASSWORD
 echo
 
@@ -46,7 +60,10 @@ DATABASE_URL="sqlserver://${SQL_ADMIN_LOGIN}:${SQL_ADMIN_PASSWORD}@${SQL_FQDN}:1
 az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" \
   --name "$API_NAME" \
-  --settings "DATABASE_URL=$DATABASE_URL" \
+  --settings \
+    "DATABASE_URL=$DATABASE_URL" \
+    "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+    "SESSION_SECRET=$SESSION_SECRET" \
   --output none
 
 SWA_TOKEN=$(az staticwebapp secrets list \
@@ -75,8 +92,14 @@ Next steps (see docs/deploy.md):
        AZURE_WEBAPP_NAME              ${API_NAME}
        AZURE_STATIC_WEB_APPS_API_TOKEN  ${SWA_TOKEN}
        VITE_API_URL                   ${API_URL}
+       GOOGLE_CLIENT_ID               ${GOOGLE_CLIENT_ID}
      and AZURE_CREDENTIALS / AZURE_WEBAPP_PUBLISH_PROFILE per docs/deploy.md.
 
-  Do not paste DATABASE_URL into a chat, a commit, or an issue.
+     SESSION_SECRET was generated and set on the App Service. It is not printed
+     here and does not need to be a GitHub secret: only the API reads it. Read it
+     back with \`az webapp config appsettings list\` if you ever need it, and
+     rotate it there to sign every user out.
+
+  Do not paste DATABASE_URL or SESSION_SECRET into a chat, a commit, or an issue.
 
 SUMMARY

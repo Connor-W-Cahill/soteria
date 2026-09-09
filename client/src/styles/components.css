@@ -426,3 +426,132 @@
 .sot-tooltip-host:focus-within > .sot-tooltip {
   opacity: 1;
 }
+
+/* ---------------------------------------------------------------------------
+ * Sign-in (US-14). Every value is a token: stylelint fails the build on a
+ * literal colour, font, radius or shadow outside tokens.css.
+ * ------------------------------------------------------------------------- */
+
+.app__signin {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-1);
+  font-weight: var(--weight-body-bold);
+  text-decoration: none;
+  background: var(--color-surface);
+}
+
+.app__signin:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+}
+
+.app__account {
+  position: relative;
+}
+
+.app__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  cursor: pointer;
+}
+
+.app__avatar-initial {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-1);
+  font-weight: var(--weight-heading-strong);
+}
+
+.app__account-menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 2;
+  min-width: 12rem;
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.app__account-name {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-0);
+  overflow-wrap: anywhere;
+}
+
+.app__account-action {
+  display: block;
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.app__account-action:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-alt);
+}
+
+.signin {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: var(--space-4) 0;
+}
+
+.signin__lede {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-1);
+  line-height: var(--line-body);
+}
+
+.signin__error {
+  margin: 0 0 var(--space-3);
+  color: var(--color-severity-high);
+  font-size: var(--font-size-1);
+}
+
+.signin__unavailable {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-1);
+}
+
+.signin__google {
+  min-height: var(--touch-target);
+}
+
+@media (max-width: 767px) {
+  .app__signin,
+  .app__avatar,
+  .app__account-action {
+    min-height: var(--touch-target);
+  }
+
+  .app__avatar {
+    width: var(--touch-target);
+  }
+}

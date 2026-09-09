@@ -101,12 +101,21 @@ test.describe("US-15 anonymous password tools", () => {
       ).toHaveCount(0);
     }
 
-    // No "signed in" affordances either.
-    await expect(
-      page.getByRole("button", { name: /sign in with google/i }),
-    ).toBeVisible();
+    // No "signed in" affordances either. The sign-in control is a LINK to
+    // /signin, not a button: US-14 loads the Google Identity script lazily on
+    // that page alone, so the anonymous tool pages contact no Google origin
+    // (ADR-0013). A button that started the flow in place would break the
+    // third-party assertion in assertAnonymous.
+    const signIn = page.getByRole("link", { name: /sign in with google/i });
+
+    await expect(signIn).toBeVisible();
+    await expect(signIn).toHaveAttribute("href", "/signin");
     await expect(
       page.getByRole("button", { name: "Notifications" }),
+    ).toHaveCount(0);
+    // And no account menu.
+    await expect(
+      page.getByRole("button", { name: /account menu/i }),
     ).toHaveCount(0);
   });
 

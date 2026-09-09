@@ -25,6 +25,7 @@ from the auth and breach-check choices) are covered in the ADR that causes them.
 | [0010](0010-github-actions-cron-scheduled-work.md) | GitHub Actions cron for all scheduled work               | Accepted |
 | [0011](0011-testing-stack.md)                      | Vitest + Supertest + Playwright + axe testing stack      | Accepted |
 | [0012](0012-seeded-design-system.md)               | Visual design derived from a fixed seed                  | Accepted |
+| [0013](0013-csp-allowances-for-google-sign-in.md)  | CSP allowances for Google Identity Services              | Accepted |
 
 ## Format
 
