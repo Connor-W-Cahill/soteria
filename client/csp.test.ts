@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { DEV_CSP, PROD_CSP, STATIC_HEADERS } from "./csp.mjs";
+import { API_ORIGIN, DEV_CSP, PROD_CSP, STATIC_HEADERS } from "./csp.mjs";
 import { swaConfig } from "./scripts/gen-swa-config.mjs";
 
 function directives(csp: string): Map<string, string[]> {
@@ -18,6 +18,19 @@ function directives(csp: string): Map<string, string[]> {
 describe("production CSP", () => {
   const prod = directives(PROD_CSP);
 
+  it("permits the API origin when it is a separate origin", () => {
+    // Finding 2 of the US-14 security review: US-14 is the first feature whose
+    // client must reach Soteria's own backend, and the pinned policy forbade it,
+    // so every auth call was blocked before it was sent. The entry is derived
+    // from VITE_API_URL, so it is empty — and 'self' suffices — once the API is
+    // served from the document's origin.
+    expect(API_ORIGIN.length).toBeLessThanOrEqual(1);
+
+    for (const origin of API_ORIGIN) {
+      expect(prod.get("connect-src")).toContain(origin);
+    }
+  });
+
   it("limits connect-src to the app origin, HIBP and Google sign-in, and nothing else", () => {
     // The exact list, not a `toContain`: this test exists to fail when a new
     // third-party origin is added, so that ADR-0007's promise is re-argued
@@ -25,6 +38,7 @@ describe("production CSP", () => {
     // is justified in ADR-0008; it never receives password-derived data.
     expect(prod.get("connect-src")).toEqual([
       "'self'",
+      ...API_ORIGIN,
       "https://api.pwnedpasswords.com",
       "https://accounts.google.com",
     ]);
@@ -35,7 +49,7 @@ describe("production CSP", () => {
     // sees anything derived from a password. Sign-in is a separate flow on a
     // separate page and carries no password material at all.
     const thirdParties = (prod.get("connect-src") ?? []).filter(
-      (source) => source !== "'self'",
+      (source) => source !== "'self'" && !API_ORIGIN.includes(source),
     );
 
     expect(thirdParties).toContain("https://api.pwnedpasswords.com");
@@ -96,6 +110,7 @@ describe("dev CSP", () => {
       ),
     ).toEqual([
       "'self'",
+      ...API_ORIGIN,
       "https://api.pwnedpasswords.com",
       "https://accounts.google.com",
     ]);

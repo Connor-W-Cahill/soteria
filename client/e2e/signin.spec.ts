@@ -88,6 +88,70 @@ test.describe("US-14 sign in with Google", () => {
     ).toBe(true);
   });
 
+  test("the session hint gates the backend probe in both directions", async ({
+    page,
+    context,
+  }) => {
+    // Finding 9 of the security review: the US-15 anonymity property rests on
+    // this one localStorage key, and the suite only ever exercised the
+    // hint-ABSENT direction. So "the password tools contact nobody" was an
+    // untested claim about the hint-present path, which a prior sign-in on a
+    // shared machine or an extension can flip.
+    //
+    // Both directions are pinned here. What the hint-present path is ALLOWED to
+    // do is call /api/me and nothing else — no Google origin, no other endpoint.
+    const calls: string[] = [];
+    context.on("request", (request) => {
+      const url = new URL(request.url());
+      if (
+        url.pathname.startsWith("/api/") ||
+        url.hostname.endsWith("google.com")
+      ) {
+        calls.push(`${request.method()} ${url.origin}${url.pathname}`);
+      }
+    });
+
+    // Absent: no backend call at all.
+    await page.goto("/password-tools");
+    await page.waitForLoadState("networkidle");
+    expect(calls, "hint absent must contact no backend").toEqual([]);
+
+    // Present: /api/me, and only /api/me. The route is fulfilled here because no
+    // API runs in the e2e environment, and an unanswered probe is not the path
+    // under test: session.tsx deliberately KEEPS the hint on a network failure
+    // (a failure is not proof the session is gone) and clears it only on a
+    // successful `{ user: null }`. Without the stub this test would assert the
+    // error branch while claiming to test the success branch.
+    await context.route("**/api/me", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ user: null }),
+      }),
+    );
+    await page.evaluate(() =>
+      window.localStorage.setItem("soteria.session-hint", "1"),
+    );
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+
+    expect(calls.length, "hint present must probe the session").toBeGreaterThan(
+      0,
+    );
+    expect(
+      [...new Set(calls.map((call) => call.split(" ")[1]))],
+      `hint present may call /api/me and nothing else, saw ${JSON.stringify(calls)}`,
+    ).toEqual([`${new URL(page.url()).origin}/api/me`]);
+
+    // And a hint with no session behind it is cleared, so it probes once and
+    // stops rather than calling the backend on every future load.
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem("soteria.session-hint"),
+      ),
+    ).toBeNull();
+  });
+
   test("has no axe violations", async ({ page }) => {
     await page.goto("/signin");
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
