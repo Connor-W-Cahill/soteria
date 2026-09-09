@@ -83,6 +83,20 @@ async function signedInWithScores(
       body: JSON.stringify(body),
     }),
   );
+  // US-19: /scores now also asks for history to feed the sparklines. An empty
+  // history is the honest default here — the arithmetic is covered elsewhere.
+  await page.route("**/api/scores/history**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        days: 90,
+        since: "2026-06-11T00:00:00.000Z",
+        categories: [],
+        changes: [],
+      }),
+    }),
+  );
   await page.addInitScript(() => {
     window.localStorage.setItem("soteria.session-hint", "1");
   });

@@ -236,6 +236,88 @@ export interface ScoresResponse extends Scores {
   updatedAt: string | null;
 }
 
+/** One recorded score for one category at one point in time. */
+export interface ScoreHistoryPoint {
+  /** ISO timestamp the snapshot was captured at. */
+  capturedAt: string;
+  /** 0-100 category score at that time. Never null: unscored rows are not stored. */
+  score: number;
+  /** Short mechanical note, e.g. "3 of 3 questions answered". */
+  rationale: string | null;
+}
+
+/** Every recorded score for one category, oldest first. */
+export interface ScoreHistorySeries {
+  key: CategoryKey;
+  points: ScoreHistoryPoint[];
+}
+
+/**
+ * One change-log entry: the movement in each category between the snapshot
+ * captured at `capturedAt` and the one before it. A category only appears when
+ * it moved.
+ */
+export interface ScoreHistoryChange {
+  capturedAt: string;
+  deltas: { key: CategoryKey; from: number; to: number; delta: number }[];
+}
+
+/**
+ * `GET /api/scores/history?days=N`. Powers the `/scores` sparklines and the
+ * `/progress` line chart and change log. It reads `score_snapshots` — the
+ * history table — directly; unlike `GET /api/scores` it does not recompute,
+ * because the point is to show what the score *was*, not what it is now.
+ */
+export interface ScoreHistoryResponse {
+  /** The window that was applied, after validation and clamping. */
+  days: number;
+  /** ISO timestamp of the start of the window. */
+  since: string;
+  /** All five categories in canonical order; `points` may be empty. */
+  categories: ScoreHistorySeries[];
+  /** Newest first. Derived from the same rows as `categories`. */
+  changes: ScoreHistoryChange[];
+}
+
+/**
+ * Builds the change log from per-category history.
+ *
+ * Every distinct capture timestamp becomes at most one entry, holding the
+ * categories whose score differs from that category's previous recorded value.
+ * A timestamp where nothing moved (e.g. the very first snapshot, or a save that
+ * changed only an unanswered category) produces no entry. Newest first, to
+ * match how it is read.
+ */
+export function deriveScoreChanges(
+  categories: ScoreHistorySeries[],
+): ScoreHistoryChange[] {
+  const timestamps = new Set<string>();
+  for (const series of categories) {
+    for (const point of series.points) timestamps.add(point.capturedAt);
+  }
+
+  const changes: ScoreHistoryChange[] = [];
+
+  for (const capturedAt of [...timestamps].sort()) {
+    const deltas: ScoreHistoryChange["deltas"] = [];
+
+    for (const series of categories) {
+      const index = series.points.findIndex((p) => p.capturedAt === capturedAt);
+      if (index <= 0) continue; // absent, or the first point (no baseline)
+
+      const to = series.points[index]!.score;
+      const from = series.points[index - 1]!.score;
+      if (to === from) continue;
+
+      deltas.push({ key: series.key, from, to, delta: to - from });
+    }
+
+    if (deltas.length > 0) changes.push({ capturedAt, deltas });
+  }
+
+  return changes.reverse();
+}
+
 /** The category most worth attention: lowest score, ties broken canonically. */
 export function weakestCategory(scores: Scores): CategoryScore | undefined {
   const scored = scores.categories.filter(

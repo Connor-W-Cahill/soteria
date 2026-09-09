@@ -8,6 +8,7 @@ import "./styles/base.css";
 import "./styles/components.css";
 import "./styles/password.css";
 import "./styles/settings.css";
+import "./styles/progress.css";
 
 import { App } from "./App";
 import { ToastProvider, applyStoredTheme } from "./components";

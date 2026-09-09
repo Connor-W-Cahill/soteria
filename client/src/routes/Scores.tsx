@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button, Card, EmptyState, SparklineCard } from "../components";
+import { useScoreHistory } from "../features/scores/history";
 
 /**
  * `/scores` — the five category scores and the overall score (US-17).
@@ -16,9 +17,10 @@ import { Button, Card, EmptyState, SparklineCard } from "../components";
  * It deliberately does not invent a number where there is none: a category with
  * no answers renders an em dash, not a zero.
  *
- * The sparklines have a single point until US-19 lands the history query, so they
- * render as an empty chart rather than a fabricated trend. `SparklineCard`
- * already draws nothing for fewer than two points.
+ * The sparklines are fed from `GET /api/scores/history` (US-19). A category with
+ * fewer than two snapshots still renders as an empty chart rather than a
+ * fabricated trend — `SparklineCard` draws nothing below two points — and a
+ * history request that fails is non-fatal: the scores still show.
  */
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
@@ -40,6 +42,14 @@ export default function Scores() {
   const [scores, setScores] = useState<ScoresResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: history } = useScoreHistory(90);
+
+  const historyByCategory = new Map(
+    (history?.categories ?? []).map((series) => [
+      series.key,
+      series.points.map((point) => point.score),
+    ]),
+  );
 
   const load = useCallback(() => {
     setLoading(true);
@@ -124,10 +134,14 @@ export default function Scores() {
             name={CATEGORY_LABELS[category.key]}
             value={scoreLabel(category)}
             why={whyFor(category)}
-            history={[]}
+            history={historyByCategory.get(category.key) ?? []}
           />
         ))}
       </div>
+
+      <p className="scores__asof">
+        <Link to="/progress">See how your score has changed over time</Link>
+      </p>
 
       {scores.updatedAt === null ? null : (
         <p className="scores__asof">

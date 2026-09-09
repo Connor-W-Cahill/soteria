@@ -24,6 +24,16 @@ import { getDb } from "../db/knex.js";
  *
  * `rationale` holds a short, mechanical summary, never a free-text field a user
  * typed.
+ *
+ * SNAPSHOT TRIGGERS (US-19). A snapshot should be written on every *scoring
+ * event*. Today exactly one such event exists — a questionnaire save (US-16/17),
+ * which calls {@link writeScoreSnapshots} from `questionnaire/routes.ts`. The
+ * issue also lists software changes (US-21+), recommendation completions
+ * (US-27+) and CVE refreshes that change matches (US-31). None of those features
+ * exist yet, so there is nothing to wire and inventing a call site would invent
+ * events. When they land, each simply computes the current `Scores` and calls
+ * this function — the hourly coalescing below means several triggers firing
+ * close together still produce at most one row per category per hour.
  */
 export interface SnapshotRow {
   id: string;
@@ -37,6 +47,37 @@ export interface SnapshotRow {
 
 /** Fits `rationale`'s varchar(500) with room to spare. */
 const RATIONALE_MAX = 400;
+
+/**
+ * Coalescing window: at most one snapshot per user per hour (US-19 acceptance).
+ *
+ * A save whose `now` is within this window of the user's most recent snapshot
+ * is DROPPED — the earlier rows are kept untouched and no new rows are written.
+ * It is not a replace.
+ *
+ * Why drop rather than replace: `score_snapshots` is a trend history, and each
+ * row is an observation of where the user stood at a moment. The first
+ * observation in an hour is the honest one to keep; letting a later save in the
+ * same hour overwrite it would let within-hour editing (answer, reconsider,
+ * answer again) silently rewrite a point the chart may already have shown, and
+ * could hide a peak the user genuinely reached. Hourly granularity is all the
+ * trend needs, and dropping is one indexed existence check instead of a
+ * delete-and-reinsert transaction.
+ *
+ * A snapshot write still never fails the answer save (see the caller), so a
+ * dropped snapshot is not an error path — it is the intended outcome.
+ */
+export const COALESCE_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * True when `now` falls within the coalescing window of `lastCapturedAt`, i.e.
+ * a snapshot taken at `lastCapturedAt` should suppress a new one at `now`.
+ *
+ * Extracted so the 59-vs-61-minute boundary is unit-testable without a database.
+ */
+export function withinCoalesceWindow(lastCapturedAt: Date, now: Date): boolean {
+  return now.getTime() - lastCapturedAt.getTime() < COALESCE_WINDOW_MS;
+}
 
 function rationaleFor(
   answered: number,
@@ -59,7 +100,9 @@ function rationaleFor(
  * into the history chart US-19 draws.
  *
  * Returns the number of rows written, so a caller can tell "nothing was
- * answered" from "the write failed".
+ * answered" (0) from "coalesced with a recent snapshot" (also 0) from "the
+ * write failed" (throws). The two zero cases are both no-ops as far as the
+ * caller needs to care.
  */
 export async function writeScoreSnapshots(
   userId: string,
@@ -68,6 +111,21 @@ export async function writeScoreSnapshots(
   db: Knex = getDb(),
   now = new Date(),
 ): Promise<number> {
+  // Coalesce: if this user already has a snapshot within the window, drop this
+  // one. Read the newest `captured_at` and compare in JS so the boundary is
+  // exercised by `withinCoalesceWindow`'s unit tests, not buried in SQL.
+  const recent = await db("score_snapshots")
+    .where({ user_id: userId })
+    .orderBy("captured_at", "desc")
+    .first<{ captured_at: Date | string } | undefined>("captured_at");
+
+  if (
+    recent !== undefined &&
+    withinCoalesceWindow(new Date(recent.captured_at), now)
+  ) {
+    return 0;
+  }
+
   const rows: SnapshotRow[] = scores.categories
     .filter(
       (category): category is typeof category & { score: number } =>

@@ -1,0 +1,157 @@
+/* ---------------------------------------------------------------------------
+ * Progress / posture history (US-19). Tokens only — no literal colour, font,
+ * radius, shadow or spacing here; stylelint fails the build on a literal colour
+ * and the rest is house style.
+ * ------------------------------------------------------------------------- */
+
+.progress {
+  max-width: 60rem;
+}
+
+.progress__lede {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-1);
+  line-height: var(--line-body);
+}
+
+.progress__controls {
+  margin: 0 0 var(--space-4);
+}
+
+.progress__error {
+  margin: 0 0 var(--space-3);
+  color: var(--color-severity-high);
+  font-size: var(--font-size-1);
+}
+
+.progress__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+
+.progress__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+}
+
+.progress__chart-card {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  padding: var(--space-3);
+}
+
+.progress__chart-title {
+  margin: 0 0 var(--space-2);
+  font-weight: var(--weight-body-bold);
+}
+
+.progress__spark {
+  display: block;
+  width: 100%;
+  height: 6rem;
+  color: var(--color-primary);
+}
+
+.progress__axis {
+  stroke: var(--color-border);
+}
+
+.progress__line {
+  stroke: currentColor;
+}
+
+.progress__dot {
+  fill: var(--color-primary-strong);
+}
+
+.progress__empty-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-0);
+}
+
+.progress__table-scroll {
+  overflow-x: auto;
+  margin: 0 0 var(--space-5);
+}
+
+.progress__table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 32rem;
+  font-size: var(--font-size-0);
+}
+
+.progress__table caption {
+  text-align: left;
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.progress__table th,
+.progress__table td {
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  text-align: right;
+}
+
+.progress__table thead th,
+.progress__table tbody th[scope="row"] {
+  text-align: left;
+}
+
+.progress__table thead th {
+  background: var(--color-surface-alt);
+  /* Full-strength text on an alt surface: muted-on-alt measured 4.35 in dark
+     against the 4.5 AA line, so headings that must be read stay at full text. */
+  color: var(--color-text);
+}
+
+.progress__changelog {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.progress__change {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  padding: var(--space-3);
+}
+
+.progress__change-date {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--weight-body-bold);
+}
+
+.progress__change-deltas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.progress__delta {
+  font-weight: var(--weight-body-bold);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .progress__section-head .sot-btn {
+    min-height: var(--touch-target);
+  }
+}

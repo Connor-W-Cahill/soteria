@@ -12,6 +12,7 @@ const SignIn = lazy(() => import("./routes/SignIn"));
 const Questionnaire = lazy(() => import("./routes/Questionnaire"));
 const Settings = lazy(() => import("./routes/Settings"));
 const Scores = lazy(() => import("./routes/Scores"));
+const Progress = lazy(() => import("./routes/Progress"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -48,6 +49,14 @@ export function App() {
             element={
               <RequireSession>
                 <Scores />
+              </RequireSession>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <RequireSession>
+                <Progress />
               </RequireSession>
             }
           />

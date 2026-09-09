@@ -131,6 +131,19 @@ thing that matters and they are already committed by that point; losing one poin
 from a history chart is a smaller harm than being told your answers did not save
 when they did.
 
+At most one snapshot is kept per user per hour (US-19). A save inside that
+window of the previous snapshot is **dropped**, not merged and not used to
+replace the earlier rows: each row is an observation of where you stood at a
+moment, and the first observation in an hour is the honest one to keep. Letting
+a later save overwrite it would let within-hour editing silently rewrite a point
+the trend may already have shown. Hourly granularity is all the chart needs.
+
+`GET /api/scores/history?days=N` is the one read that _does_ touch
+`score_snapshots`, because its job is to report what the score was over time.
+`days` is validated to a bounded integer (default 90, max 365): an unbounded
+window is a cheap way for a signed-in caller to pull their whole history at
+once, so the ceiling sits at the route, not in the query layer.
+
 ## A note on the floor
 
 One question — "do you use a different email address for important accounts?" —

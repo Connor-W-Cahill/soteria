@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   computeScores,
+  deriveScoreChanges,
   weakestCategory,
   type Answers,
+  type ScoreHistorySeries,
   type SoftwareFinding,
 } from "./engine.js";
 import {
@@ -453,5 +455,53 @@ describe("weakestCategory", () => {
 
     expect(weakest?.key).toBe("password_hygiene");
     expect(weakest?.score).toBe(0);
+  });
+});
+
+describe("deriveScoreChanges", () => {
+  const series = (
+    key: ScoreHistorySeries["key"],
+    scores: [string, number][],
+  ): ScoreHistorySeries => ({
+    key,
+    points: scores.map(([capturedAt, score]) => ({
+      capturedAt,
+      score,
+      rationale: null,
+    })),
+  });
+
+  it("emits one entry per capture where a category moved, newest first", () => {
+    const changes = deriveScoreChanges([
+      series("password_hygiene", [
+        ["2026-08-01T00:00:00.000Z", 40],
+        ["2026-08-02T00:00:00.000Z", 55],
+        ["2026-08-03T00:00:00.000Z", 55],
+      ]),
+      series("update_habits", [
+        ["2026-08-01T00:00:00.000Z", 20],
+        ["2026-08-03T00:00:00.000Z", 32],
+      ]),
+    ]);
+
+    expect(changes.map((change) => change.capturedAt)).toEqual([
+      "2026-08-03T00:00:00.000Z",
+      "2026-08-02T00:00:00.000Z",
+    ]);
+    // Aug 3: password_hygiene held at 55 (no delta), update_habits +12.
+    expect(changes[0]?.deltas).toEqual([
+      { key: "update_habits", from: 20, to: 32, delta: 12 },
+    ]);
+    expect(changes[1]?.deltas).toEqual([
+      { key: "password_hygiene", from: 40, to: 55, delta: 15 },
+    ]);
+  });
+
+  it("never reports the first snapshot as a change (no baseline)", () => {
+    const changes = deriveScoreChanges([
+      series("multifactor_authentication", [["2026-08-01T00:00:00.000Z", 70]]),
+    ]);
+
+    expect(changes).toEqual([]);
   });
 });

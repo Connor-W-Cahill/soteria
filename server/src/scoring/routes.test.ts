@@ -8,6 +8,7 @@ import { SESSION_COOKIE } from "../auth/cookie.js";
 import { issueSessionToken } from "../auth/session.js";
 import type { UserRecord } from "../auth/users.js";
 import type { QuestionnaireStore } from "../questionnaire/store.js";
+import type { ScoringRouterOptions } from "./routes.js";
 
 const USER: UserRecord = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -50,7 +51,10 @@ function storeReturning(
   } as unknown as QuestionnaireStore;
 }
 
-function testApp(store: QuestionnaireStore) {
+function testApp(
+  store: QuestionnaireStore,
+  readHistory?: ScoringRouterOptions["readHistory"],
+) {
   return createApp({
     checkDbConnection: async () => true,
     enableRateLimit: false,
@@ -64,7 +68,8 @@ function testApp(store: QuestionnaireStore) {
       bumpVersion: async () => 2,
       audit: async () => {},
     },
-    scoringRouterOptions: { store },
+    scoringRouterOptions:
+      readHistory === undefined ? { store } : { store, readHistory },
   });
 }
 
@@ -180,5 +185,90 @@ describe("GET /api/scores", () => {
       .expect(200);
 
     expect(store.latest).toHaveBeenCalledWith(USER.id);
+  });
+});
+
+describe("GET /api/scores/history", () => {
+  const emptyHistory = (days: number) =>
+    vi.fn(async () => ({
+      days,
+      since: "2026-06-01T00:00:00.000Z",
+      categories: [],
+      changes: [],
+    }));
+
+  it("requires a session", async () => {
+    const response = await request(
+      testApp(storeReturning(null), emptyHistory(90)),
+    )
+      .get("/api/scores/history")
+      .expect(401);
+
+    expect(response.body.error.code).toBe("unauthorized");
+  });
+
+  it("defaults to a 90-day window when days is omitted", async () => {
+    const readHistory = vi.fn(async (_userId: string, days: number) => ({
+      days,
+      since: "x",
+      categories: [],
+      changes: [],
+    }));
+
+    const response = await request(testApp(storeReturning(null), readHistory))
+      .get("/api/scores/history")
+      .set("Cookie", await cookie())
+      .expect(200);
+
+    expect(readHistory).toHaveBeenCalledWith(USER.id, 90);
+    expect(response.body.days).toBe(90);
+  });
+
+  it("accepts a bounded days value", async () => {
+    const readHistory = emptyHistory(7);
+
+    await request(testApp(storeReturning(null), readHistory))
+      .get("/api/scores/history?days=7")
+      .set("Cookie", await cookie())
+      .expect(200);
+
+    expect(readHistory).toHaveBeenCalledWith(USER.id, 7);
+  });
+
+  it("rejects days above the maximum", async () => {
+    const readHistory = emptyHistory(90);
+
+    const response = await request(testApp(storeReturning(null), readHistory))
+      .get("/api/scores/history?days=100000")
+      .set("Cookie", await cookie())
+      .expect(400);
+
+    expect(response.body.error.code).toBe("validation_failed");
+    expect(readHistory).not.toHaveBeenCalled();
+  });
+
+  it("rejects a zero, negative or non-integer days value", async () => {
+    const readHistory = emptyHistory(90);
+    const app = testApp(storeReturning(null), readHistory);
+
+    for (const bad of ["0", "-5", "3.5", "abc"]) {
+      await request(app)
+        .get(`/api/scores/history?days=${bad}`)
+        .set("Cookie", await cookie())
+        .expect(400);
+    }
+
+    expect(readHistory).not.toHaveBeenCalled();
+  });
+
+  it("rejects unexpected query parameters", async () => {
+    const response = await request(
+      testApp(storeReturning(null), emptyHistory(90)),
+    )
+      .get("/api/scores/history?days=30&all=1")
+      .set("Cookie", await cookie())
+      .expect(400);
+
+    expect(response.body.error.code).toBe("validation_failed");
   });
 });
