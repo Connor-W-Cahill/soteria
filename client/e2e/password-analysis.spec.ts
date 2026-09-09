@@ -79,6 +79,30 @@ test.describe("US-04 password analysis", () => {
     await expect(page.getByText("Not found in known breaches")).toBeVisible();
   });
 
+  test("a strong password is never called safe when breach status is unknown", async ({
+    page,
+  }) => {
+    // HIBP is down: strength is known (Strong) but breach status is absent.
+    await page.route("https://api.pwnedpasswords.com/**", (route) =>
+      route.fulfill({ status: 503, body: "" }),
+    );
+    await run(page, STRONG);
+
+    await expect(
+      page.locator(".pw-analysis__card").filter({
+        has: page.getByRole("heading", {
+          name: "Strength (estimated locally)",
+        }),
+      }),
+    ).toContainText("Strong");
+
+    const verdict = page.locator(".pw-verdict");
+    await expect(verdict).not.toHaveClass(/pw-verdict--ok/);
+    await expect(verdict).toContainText("Breach status could not be checked");
+    await expect(verdict).not.toContainText("looks strong");
+    await expect(page.getByText("Breach status unavailable")).toBeVisible();
+  });
+
   test("a weak, unbreached password reads as weak with suggestions", async ({
     page,
   }) => {
