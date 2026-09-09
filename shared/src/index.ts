@@ -26,7 +26,6 @@ export interface QuestionnaireState {
   answers: Record<string, string>;
   updatedAt: string | null;
 }
-
 export interface HealthResponse {
   status: "ok";
   version: string;
