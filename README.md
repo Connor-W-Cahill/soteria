@@ -42,6 +42,13 @@ the `mssql` driver. `DATABASE_URL` carries the connection (see `.env.example`).
 The schema, its privacy invariants, and the ERD are documented in
 [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
+## API conventions
+
+The error envelope, request validation, log redaction, correlation ids, rate
+limiting, and the audit log are documented in
+[`docs/architecture/conventions.md`](docs/architecture/conventions.md). Every
+route added from Phase 2 on uses them.
+
 ## Checks
 
 - `npm run lint` checks ESLint and Prettier.
