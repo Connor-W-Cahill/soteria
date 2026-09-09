@@ -22,3 +22,35 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: client
       - run: npm run playwright -w @soteria/client
+
+  db:
+    name: db-migrations
+    runs-on: ubuntu-latest
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: Soteria_ci_only_1
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Soteria_ci_only_1 -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # Throwaway CI-only container credentials; the database is destroyed with the runner.
+      DATABASE_URL: sqlserver://sa:Soteria_ci_only_1@localhost:1433/soteria_ci?encrypt=false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:ensure
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm test -w @soteria/server

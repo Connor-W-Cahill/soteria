@@ -1,0 +1,26 @@
+# Local development database. Production uses Azure SQL Database (see docs/deploy.md).
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: soteria-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      # Local-only development password. Never reused anywhere else and never in Azure.
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Soteria_local_dev_1}
+    ports:
+      - "1433:1433"
+    volumes:
+      - soteria-sql-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q ''SELECT 1'' || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  soteria-sql-data:
