@@ -4,15 +4,34 @@ import { IconButton } from "./IconButton";
 import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
 import { SkipLink } from "./SkipLink";
+import { useSession, type SessionStatus } from "../session";
 
+/**
+ * Primary navigation. `accountOnly` items need a signed-in profile; the rest
+ * (Password Tools, Learn) are usable anonymously and stay visible when signed
+ * out (US-15).
+ */
 export const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/password-tools", label: "Password Tools" },
-  { to: "/questionnaire", label: "Questionnaire" },
-  { to: "/software", label: "Software" },
-  { to: "/recommendations", label: "Recommendations" },
-  { to: "/learn", label: "Learn" },
+  { to: "/dashboard", label: "Dashboard", accountOnly: true },
+  { to: "/password-tools", label: "Password Tools", accountOnly: false },
+  { to: "/questionnaire", label: "Questionnaire", accountOnly: true },
+  { to: "/software", label: "Software", accountOnly: true },
+  { to: "/recommendations", label: "Recommendations", accountOnly: true },
+  { to: "/learn", label: "Learn", accountOnly: false },
 ] as const;
+
+/** The nav items a visitor with this session status may see. */
+export function navItemsFor(
+  status: SessionStatus,
+): ReadonlyArray<(typeof NAV_ITEMS)[number]> {
+  if (status === "authenticated") return NAV_ITEMS;
+  return NAV_ITEMS.filter((item) => !item.accountOnly);
+}
+
+/** Where "/" and the wordmark lead, given the session. */
+export function homePathFor(status: SessionStatus): string {
+  return status === "authenticated" ? "/dashboard" : "/password-tools";
+}
 
 function NavIcon() {
   return (
@@ -36,35 +55,43 @@ export interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { status } = useSession();
+  const navItems = navItemsFor(status);
+  const signedIn = status === "authenticated";
+
   return (
     <div className="app">
       <SkipLink />
       <header className="app__band1">
-        <NavLink to="/dashboard" className="app__wordmark">
+        <NavLink to={homePathFor(status)} className="app__wordmark">
           Soteria
         </NavLink>
         <div className="app__band1-actions">
-          <IconButton label="Notifications">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-            >
-              <path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4z" />
-              <path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
-            </svg>
-          </IconButton>
+          {signedIn ? (
+            <IconButton label="Notifications">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              >
+                <path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4z" />
+                <path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
+              </svg>
+            </IconButton>
+          ) : null}
           <ThemeToggle />
-          <Button variant="secondary">Sign in with Google</Button>
+          {signedIn ? null : (
+            <Button variant="secondary">Sign in with Google</Button>
+          )}
         </div>
       </header>
 
       <nav className="app__band2" aria-label="Primary">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className="app__navlink">
             {item.label}
           </NavLink>
@@ -76,7 +103,7 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       <nav className="app__tabbar" aria-label="Primary mobile">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className="app__navlink">
             <NavIcon />
             <span>{item.label}</span>
