@@ -1,6 +1,6 @@
 import type { Knex } from "knex";
 
-import { logger } from "../logging/logger.js";
+import { logger, serializeError } from "../logging/logger.js";
 import { getDb } from "./knex.js";
 
 /**
@@ -66,8 +66,11 @@ export async function recordAuditEvent(
   try {
     await db("audit_log").insert(toAuditRow(event));
   } catch (error) {
+    // Serialise explicitly: an Error's message and stack are non-enumerable, and
+    // a knex query error carries its bindings. A lost audit event must at least
+    // leave an operator something to act on.
     logger.error(
-      { err: error, action: event.action },
+      { err: serializeError(error), action: event.action },
       "Failed to write an audit_log row",
     );
   }

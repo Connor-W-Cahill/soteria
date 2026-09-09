@@ -143,6 +143,19 @@ suite("initial schema migration", () => {
     await db("products").where({ id: row.id }).delete();
   });
 
+  // Security review finding 9: the AUDIT_ACTIONS union is a compile-time guard
+  // only. The CHECK constraint is what makes "no free text in the trail" true of
+  // the database.
+  it("rejects an action outside the audit_log vocabulary", async () => {
+    await expect(
+      db("audit_log").insert({ action: "whatever.i.like" }),
+    ).rejects.toThrow();
+
+    await expect(
+      db("audit_log").insert({ action: "auth.sign_in" }),
+    ).resolves.toBeDefined();
+  });
+
   it("rolls back cleanly", async () => {
     await db.migrate.rollback(undefined, true);
     expect(await db.schema.hasTable("users")).toBe(false);

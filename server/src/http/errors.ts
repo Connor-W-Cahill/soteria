@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 
-import { logger } from "../logging/logger.js";
+import { logger, serializeError } from "../logging/logger.js";
 import { requestIdOf } from "./request-id.js";
 
 /**
@@ -23,6 +23,7 @@ export const ERROR_CODES = [
   "unauthorized",
   "forbidden",
   "not_found",
+  "payload_too_large",
   "rate_limited",
   "internal_error",
 ] as const;
@@ -35,6 +36,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   unauthorized: 401,
   forbidden: 403,
   not_found: 404,
+  payload_too_large: 413,
   rate_limited: 429,
   internal_error: 500,
 };
@@ -97,6 +99,32 @@ export function zodDetails(error: ZodError): Array<{
   }));
 }
 
+/**
+ * Translates the errors `express.json()` throws into the envelope.
+ *
+ * body-parser attaches the **raw request body** to a parse failure as an own
+ * enumerable `body` property, so such an error must never be logged whole and
+ * must never fall through to the generic 500 branch. Its `type` is a stable
+ * `entity.*` string.
+ */
+export function bodyParserError(error: unknown): ApiError | undefined {
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
+
+  const type = (error as { type?: unknown }).type;
+
+  if (typeof type !== "string" || !type.startsWith("entity.")) {
+    return undefined;
+  }
+
+  if (type === "entity.too.large") {
+    return new ApiError("payload_too_large", "That request body is too large.");
+  }
+
+  return ApiError.badRequest("The request body could not be parsed as JSON.");
+}
+
 /** Terminal 404 handler; mounted after every route. */
 export function notFoundHandler(
   _request: Request,
@@ -130,7 +158,7 @@ export function errorHandler(
             "The request did not match the expected shape.",
             zodDetails(error),
           )
-        : undefined;
+        : bodyParserError(error);
 
   if (apiError !== undefined) {
     if (apiError.status >= 500) {
@@ -153,8 +181,11 @@ export function errorHandler(
     return;
   }
 
+  // Only the serialised allowlist is logged. The raw error must never be
+  // handed to the logger: body-parser attaches the offending request body to
+  // its errors, and a driver attaches its query bindings.
   logger.error(
-    { err: error, requestId: requestIdOf(response) },
+    { err: serializeError(error), requestId: requestIdOf(response) },
     "Unhandled request error",
   );
 

@@ -12,7 +12,17 @@ export function requestLog() {
   return (request: Request, response: Response, next: NextFunction): void => {
     const startedAt = process.hrtime.bigint();
 
-    response.on("finish", () => {
+    // "close" rather than "finish": an aborted or reset connection never
+    // finishes, and that is exactly the traffic worth seeing.
+    let logged = false;
+
+    response.on("close", () => {
+      if (logged) {
+        return;
+      }
+
+      logged = true;
+
       const durationMs =
         Number(process.hrtime.bigint() - startedAt) / 1_000_000;
 
@@ -20,7 +30,7 @@ export function requestLog() {
         {
           method: request.method,
           path: request.route?.path ?? request.path,
-          status: response.statusCode,
+          status: response.writableEnded ? response.statusCode : 499,
           durationMs: Math.round(durationMs),
           requestId: requestIdOf(response),
         },

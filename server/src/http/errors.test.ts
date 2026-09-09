@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
   ApiError,
+  bodyParserError,
   errorHandler,
   notFoundHandler,
   zodDetails,
@@ -137,5 +138,59 @@ describe("validate", () => {
     expect(() => validated({} as express.Request)).toThrow(
       /no validate\(\) middleware/,
     );
+  });
+});
+
+/**
+ * Security review finding 2: body-parser attaches the raw request body to a
+ * parse failure as an own enumerable `body` property. Such an error must be
+ * translated into a client error, and must never be handed to the logger whole
+ * — `serializeError` drops the attached `body`, which is proved in
+ * `logging/logger.test.ts`.
+ */
+describe("bodyParserError", () => {
+  function parseFailure(type: string, body: string) {
+    return Object.assign(new SyntaxError("Unexpected end of JSON input"), {
+      type,
+      body,
+      status: 400,
+      expose: true,
+    });
+  }
+
+  it("maps a parse failure to bad_request without echoing the body", () => {
+    const apiError = bodyParserError(
+      parseFailure("entity.parse.failed", '{"password":"hunter2"'),
+    );
+
+    expect(apiError?.code).toBe("bad_request");
+    expect(apiError?.status).toBe(400);
+    expect(JSON.stringify(apiError?.toEnvelope())).not.toContain("hunter2");
+  });
+
+  it("maps an oversized body to payload_too_large", () => {
+    const apiError = bodyParserError(parseFailure("entity.too.large", "x"));
+
+    expect(apiError?.code).toBe("payload_too_large");
+    expect(apiError?.status).toBe(413);
+  });
+
+  it("ignores anything that is not a body-parser error", () => {
+    expect(bodyParserError(new Error("unrelated"))).toBeUndefined();
+    expect(bodyParserError({ type: "not.entity" })).toBeUndefined();
+    expect(bodyParserError(null)).toBeUndefined();
+  });
+
+  it("routes a parse failure through the handler as a 400 envelope", async () => {
+    const app = appWith((instance) => {
+      instance.post("/thing", (_request, _response, next) => {
+        next(parseFailure("entity.parse.failed", '{"password":"hunter2"'));
+      });
+    });
+
+    const response = await request(app).post("/thing").expect(400);
+
+    expect(response.body.error.code).toBe("bad_request");
+    expect(JSON.stringify(response.body)).not.toContain("hunter2");
   });
 });
