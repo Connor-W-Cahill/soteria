@@ -15,7 +15,16 @@ export const SESSION_COOKIE = "soteria_session";
  *   is the CSRF control for the state-changing routes; `lax` rather than
  *   `strict` so that following a link back into the app keeps you signed in.
  * - `secure` is on everywhere except plain-HTTP local development.
- * - `path: "/"` because the API and the app share an origin in production.
+ * - `path: "/"` so one cookie covers the whole site.
+ *
+ * `SameSite=Lax` REQUIRES the client and the API to be same-origin, and the
+ * topology in `infra/` does not yet make them so: the client is a Static Web App
+ * on `*.azurestaticapps.net` and the API an App Service on
+ * `*.azurewebsites.net`, which are cross-site, so this cookie would be neither
+ * stored nor sent in production. An earlier version of this comment asserted the
+ * opposite. Tracked as issue #111, which blocks the production half of US-14;
+ * the fix is to serve both from one origin, NOT to switch to `SameSite=None`,
+ * which would delete the CSRF control above.
  */
 function attributes(config: AuthConfig) {
   return {
