@@ -1,0 +1,423 @@
+{
+  "$schema": "./products.schema.json",
+  "products": [
+    {
+      "id": "windows-10",
+      "name": "Windows 10",
+      "vendor": "Microsoft",
+      "category": "operating-system",
+      "cpeVendor": "microsoft",
+      "cpeProduct": "windows_10",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Windows 10",
+        "steps": [
+          "Click the Start button, then click the gear icon to open Settings.",
+          "Select \"System\", then scroll down and click \"About\".",
+          "Under \"Windows specifications\", read the line labelled \"Version\" (for example 22H2) and the line \"OS build\" (for example 19045.4046).",
+          "Report the OS build number, including the digits after the dot."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://learn.microsoft.com/en-us/windows/release-health/release-information"
+    },
+    {
+      "id": "windows-11",
+      "name": "Windows 11",
+      "vendor": "Microsoft",
+      "category": "operating-system",
+      "cpeVendor": "microsoft",
+      "cpeProduct": "windows_11",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Windows 11",
+        "steps": [
+          "Click the Start button and open Settings (the gear icon).",
+          "Click \"System\" in the left-hand list, then scroll down and click \"About\".",
+          "Under \"Windows specifications\", read the \"Version\" line (for example 23H2) and the \"OS build\" line (for example 22631.3737).",
+          "Report the full OS build number, including the digits after the dot."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information"
+    },
+    {
+      "id": "macos",
+      "name": "macOS",
+      "vendor": "Apple",
+      "category": "operating-system",
+      "cpeVendor": "apple",
+      "cpeProduct": "macos",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "macOS",
+        "steps": [
+          "Click the Apple menu in the top-left corner of the screen.",
+          "Choose \"About This Mac\".",
+          "Read the version shown next to \"macOS\" (for example \"Sonoma 14.5\").",
+          "Report the number, such as 14.5."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://support.apple.com/en-us/100100"
+    },
+    {
+      "id": "ubuntu",
+      "name": "Ubuntu",
+      "vendor": "Canonical",
+      "category": "operating-system",
+      "cpeVendor": "canonical",
+      "cpeProduct": "ubuntu_linux",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "Ubuntu desktop",
+        "steps": [
+          "Open the \"Settings\" application from the Activities menu or the app grid.",
+          "Scroll to the bottom of the left-hand list and click \"About\" (it may be called \"System Details\").",
+          "Read the line labelled \"OS Name\" or \"OS Version\" (for example \"Ubuntu 24.04.1 LTS\").",
+          "Report the version number, such as 24.04."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://ubuntu.com/security/notices"
+    },
+    {
+      "id": "google-chrome",
+      "name": "Google Chrome",
+      "vendor": "Google",
+      "category": "browser",
+      "cpeVendor": "google",
+      "cpeProduct": "chrome",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Google Chrome (Windows, macOS, or Linux)",
+        "steps": [
+          "Click the three-dot menu in the top-right corner of Chrome.",
+          "Choose \"Help\", then \"About Google Chrome\".",
+          "The version number is shown on that page, for example \"128.0.6613.120\". Chrome also checks for updates when you open this page.",
+          "Report the full number, including the parts after each dot."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://chromereleases.googleblog.com/"
+    },
+    {
+      "id": "mozilla-firefox",
+      "name": "Mozilla Firefox",
+      "vendor": "Mozilla",
+      "category": "browser",
+      "cpeVendor": "mozilla",
+      "cpeProduct": "firefox",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "Mozilla Firefox (Windows, macOS, or Linux)",
+        "steps": [
+          "Click the menu button (three horizontal lines) in the top-right corner.",
+          "Choose \"Help\", then \"About Firefox\".",
+          "Read the version number shown in the window that opens, for example \"128.0.3\".",
+          "Report that number."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.mozilla.org/en-US/security/advisories/"
+    },
+    {
+      "id": "microsoft-edge",
+      "name": "Microsoft Edge",
+      "vendor": "Microsoft",
+      "category": "browser",
+      "cpeVendor": "microsoft",
+      "cpeProduct": "edge",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Microsoft Edge (Windows or macOS)",
+        "steps": [
+          "Click the three-dot menu in the top-right corner of Edge.",
+          "Choose \"Help and feedback\", then \"About Microsoft Edge\".",
+          "Read the version number on that page, for example \"127.0.2651.98\".",
+          "Report the full number, including the parts after each dot."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnotes-security"
+    },
+    {
+      "id": "apple-safari",
+      "name": "Safari",
+      "vendor": "Apple",
+      "category": "browser",
+      "cpeVendor": "apple",
+      "cpeProduct": "safari",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "Safari on macOS",
+        "steps": [
+          "Open Safari, then click \"Safari\" in the menu bar at the top of the screen.",
+          "Choose \"About Safari\".",
+          "Read the version number in the small window that appears, for example \"Version 17.5\".",
+          "Report that number. Safari updates come through the macOS Software Update screen."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://support.apple.com/en-us/100100"
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom Workplace",
+      "vendor": "Zoom Video Communications",
+      "category": "application",
+      "cpeVendor": "zoom",
+      "cpeProduct": "zoom",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "Zoom desktop app (Windows or macOS)",
+        "steps": [
+          "Open the Zoom app and sign in if asked.",
+          "Click your profile picture or initials in the top-right corner.",
+          "Choose \"About Zoom\" (on some versions this is under \"Help\").",
+          "Read the version number shown, for example \"6.1.0 (18631)\", and report the part before the parenthesis."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.zoom.com/en/trust/security-bulletin/"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "vendor": "Discord",
+      "category": "application",
+      "cpeVendor": "discord",
+      "cpeProduct": "discord",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Discord desktop app on Windows",
+        "steps": [
+          "Open Discord.",
+          "Click the gear icon (\"User Settings\") next to your name at the bottom-left of the window.",
+          "Scroll down the left-hand list; the version is printed in small grey text at the very bottom (for example \"Stable 349043\").",
+          "Report that number."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://discord.com/security"
+    },
+    {
+      "id": "vlc",
+      "name": "VLC media player",
+      "vendor": "VideoLAN",
+      "category": "application",
+      "cpeVendor": "videolan",
+      "cpeProduct": "vlc_media_player",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "VLC media player on Windows",
+        "steps": [
+          "Open VLC media player.",
+          "Click \"Help\" in the menu bar at the top of the window.",
+          "Choose \"About\".",
+          "Read the version number near the top of the window that opens, for example \"3.0.21\", and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.videolan.org/security/"
+    },
+    {
+      "id": "7-zip",
+      "name": "7-Zip",
+      "vendor": "Igor Pavlov",
+      "category": "application",
+      "cpeVendor": "7-zip",
+      "cpeProduct": "7-zip",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "7-Zip on Windows",
+        "steps": [
+          "Open the 7-Zip File Manager from the Start menu.",
+          "Click the \"Help\" menu at the top, then choose \"About 7-Zip\".",
+          "Read the version number shown at the top of the window, for example \"7-Zip 24.08\".",
+          "Report the number, such as 24.08."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://7-zip.org/history.txt"
+    },
+    {
+      "id": "adobe-acrobat-reader",
+      "name": "Adobe Acrobat Reader",
+      "vendor": "Adobe",
+      "category": "application",
+      "cpeVendor": "adobe",
+      "cpeProduct": "acrobat_reader",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "Adobe Acrobat Reader on Windows",
+        "steps": [
+          "Open Adobe Acrobat Reader.",
+          "Click the \"Help\" menu at the top of the window (on newer versions, click the menu button with three lines, then \"Help\").",
+          "Choose \"About Adobe Acrobat Reader\".",
+          "Read the version shown, for example \"2024.002.20933\", and report the full number."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://helpx.adobe.com/security/products/acrobat.html"
+    },
+    {
+      "id": "notepad-plus-plus",
+      "name": "Notepad++",
+      "vendor": "Notepad++ (Don Ho)",
+      "category": "application",
+      "cpeVendor": "notepad-plus-plus",
+      "cpeProduct": "notepad++",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "Notepad++ on Windows",
+        "steps": [
+          "Open Notepad++.",
+          "Click the \"?\" menu at the right-hand end of the menu bar.",
+          "Choose \"About Notepad++\".",
+          "Read the version number in the window that opens, for example \"8.6.9\", and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://notepad-plus-plus.org/downloads/"
+    },
+    {
+      "id": "wireshark",
+      "name": "Wireshark",
+      "vendor": "The Wireshark Foundation",
+      "category": "application",
+      "cpeVendor": "wireshark",
+      "cpeProduct": "wireshark",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "Wireshark on Windows",
+        "steps": [
+          "Open Wireshark.",
+          "Click the \"Help\" menu at the top of the window.",
+          "Choose \"About Wireshark\".",
+          "On the \"Wireshark\" tab, read the version near the top (for example \"Version 4.2.6\") and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.wireshark.org/security/"
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "vendor": "Valve",
+      "category": "application",
+      "cpeVendor": "valvesoftware",
+      "cpeProduct": "steam",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Steam client on Windows",
+        "steps": [
+          "Open the Steam app.",
+          "Click the \"Steam\" menu in the top-left corner.",
+          "Choose \"About Steam\".",
+          "Read the line that gives the build date and number (for example \"Built: 10 Jul 2024\"). Report the build date shown."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://store.steampowered.com/news/app/593110"
+    },
+    {
+      "id": "microsoft-office",
+      "name": "Microsoft Office",
+      "vendor": "Microsoft",
+      "category": "application",
+      "cpeVendor": "microsoft",
+      "cpeProduct": "office",
+      "versionScheme": "build",
+      "versionHelp": {
+        "platform": "Microsoft Office / Microsoft 365 on Windows",
+        "steps": [
+          "Open any Office program, such as Word or Excel.",
+          "Click \"File\", then \"Account\" (or \"Office Account\").",
+          "Click \"About Word\" (or the matching program name).",
+          "Read the version and build near the top, for example \"Version 2406 (Build 17726.20206)\", and report the build number."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://learn.microsoft.com/en-us/officeupdates/release-notes-microsoft365-apps"
+    },
+    {
+      "id": "itunes",
+      "name": "iTunes",
+      "vendor": "Apple",
+      "category": "application",
+      "cpeVendor": "apple",
+      "cpeProduct": "itunes",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "iTunes on Windows",
+        "steps": [
+          "Open iTunes.",
+          "Click the \"Help\" menu at the top of the window.",
+          "Choose \"About iTunes\".",
+          "Read the version number shown (for example \"12.13.2.3\") and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://support.apple.com/en-us/100100"
+    },
+    {
+      "id": "winrar",
+      "name": "WinRAR",
+      "vendor": "win.rar GmbH / RARLAB",
+      "category": "application",
+      "cpeVendor": "rarlab",
+      "cpeProduct": "winrar",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "WinRAR on Windows",
+        "steps": [
+          "Open WinRAR from the Start menu.",
+          "Click the \"Help\" menu at the top, then choose \"About WinRAR\".",
+          "Read the version shown in the small window, for example \"WinRAR 7.01\".",
+          "Report the number, such as 7.01."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.win-rar.com/whatsnew.html"
+    },
+    {
+      "id": "oracle-jre",
+      "name": "Java (JRE)",
+      "vendor": "Oracle",
+      "category": "application",
+      "cpeVendor": "oracle",
+      "cpeProduct": "jre",
+      "versionScheme": "marketing",
+      "versionHelp": {
+        "platform": "Oracle Java on Windows",
+        "steps": [
+          "Open the Windows Control Panel and click the \"Java\" icon (the coffee cup) to open the Java Control Panel.",
+          "On the \"General\" tab, click the \"About...\" button.",
+          "Read the version line, for example \"Version 8 Update 421 (build 1.8.0_421-b09)\".",
+          "Report the update number, such as \"8 Update 421\"."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.oracle.com/security-alerts/"
+    },
+    {
+      "id": "mozilla-thunderbird",
+      "name": "Mozilla Thunderbird",
+      "vendor": "Mozilla",
+      "category": "application",
+      "cpeVendor": "mozilla",
+      "cpeProduct": "thunderbird",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "Mozilla Thunderbird (Windows, macOS, or Linux)",
+        "steps": [
+          "Open Thunderbird.",
+          "Click the menu button (three horizontal lines) in the top-right corner.",
+          "Choose \"Help\", then \"About Thunderbird\".",
+          "Read the version number in the window that opens, for example \"128.0.1\", and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.mozilla.org/en-US/security/advisories/"
+    },
+    {
+      "id": "libreoffice",
+      "name": "LibreOffice",
+      "vendor": "The Document Foundation",
+      "category": "application",
+      "cpeVendor": "libreoffice",
+      "cpeProduct": "libreoffice",
+      "versionScheme": "semver",
+      "versionHelp": {
+        "platform": "LibreOffice on Windows",
+        "steps": [
+          "Open any LibreOffice program, such as Writer or Calc.",
+          "Click the \"Help\" menu at the top of the window.",
+          "Choose \"About LibreOffice\".",
+          "Read the version number shown, for example \"24.2.5.2\", and report it."
+        ]
+      },
+      "vendorAdvisoryUrl": "https://www.libreoffice.org/security/"
+    }
+  ]
+}
