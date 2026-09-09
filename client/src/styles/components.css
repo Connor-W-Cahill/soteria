@@ -108,6 +108,23 @@
   accent-color: var(--color-primary-strong);
 }
 
+/* ---- Touch targets ----
+ * DESIGN_SEED.md:48 requires at least 44x44 below 768px. Controls sized from
+ * --control-height get this automatically via tokens.css, but these two set their
+ * own box, so they need it stating explicitly (#82). axe cannot catch either:
+ * WCAG 2.2 AA Target Size (Minimum) is only 24px. */
+@media (max-width: 767px) {
+  .sot-tabs__tab {
+    min-height: var(--touch-target);
+  }
+
+  /* The finger target is the label, not the 18px box it wraps. */
+  .sot-checkbox {
+    min-height: var(--touch-target);
+    align-items: center;
+  }
+}
+
 /* ---- Card (flat-bordered) ---- */
 .sot-card {
   background: var(--color-surface);

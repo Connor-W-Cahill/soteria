@@ -13,3 +13,6 @@ docs/plan/render-backlog.mjs
 client/src/styles/tokens.css
 client/playwright-report
 client/test-results
+
+# Bundled third-party data (EFF large wordlist, verbatim)
+shared/src/password/eff-large.json

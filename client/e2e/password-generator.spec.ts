@@ -1,9 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const GENERATED = /^[\x21-\x7e]{8,64}$/;
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+/** Scope every query to the password card. /password-tools also hosts the
+ * breach checker (US-01) and the passphrase generator (US-03), which have their
+ * own "Generate" button and range slider. */
+function pwgen(page: Page) {
+  return page.locator(".sot-pwgen");
+}
 
 test.describe("US-02 random password generator", () => {
   for (const theme of ["light", "dark"] as const) {
@@ -14,7 +21,7 @@ test.describe("US-02 random password generator", () => {
           document.documentElement.dataset.theme = "dark";
         });
       }
-      await page.getByRole("button", { name: "Generate" }).click();
+      await pwgen(page).getByRole("button", { name: "Generate" }).click();
       const results = await new AxeBuilder({ page })
         .include(".sot-pwgen")
         .withTags(WCAG)
@@ -26,7 +33,7 @@ test.describe("US-02 random password generator", () => {
   test("no horizontal scroll at 375px", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 780 });
     await page.goto("/password-tools");
-    await page.getByRole("button", { name: "Generate" }).click();
+    await pwgen(page).getByRole("button", { name: "Generate" }).click();
     const overflow = await page.evaluate(
       () =>
         document.documentElement.scrollWidth >
@@ -44,10 +51,11 @@ test.describe("US-02 random password generator", () => {
     });
 
     await page.goto("/password-tools");
-    const output = page.getByLabel("Generated password");
+    const card = pwgen(page);
+    const output = card.getByLabel("Generated password");
     await expect(output).toHaveValue("");
 
-    await page.getByRole("button", { name: "Generate" }).click();
+    await card.getByRole("button", { name: "Generate" }).click();
     const value = await output.inputValue();
     expect(value).toMatch(GENERATED);
     expect(value.length).toBe(20);
@@ -55,7 +63,7 @@ test.describe("US-02 random password generator", () => {
     // Regenerate a few times: distinct values, still in range.
     const seen = new Set<string>([value]);
     for (let i = 0; i < 5; i++) {
-      await page.getByRole("button", { name: "Generate" }).click();
+      await card.getByRole("button", { name: "Generate" }).click();
       seen.add(await output.inputValue());
     }
     expect(seen.size).toBeGreaterThan(1);
@@ -79,34 +87,36 @@ test.describe("US-02 random password generator", () => {
 
   test("length bound and character-class toggles", async ({ page }) => {
     await page.goto("/password-tools");
-    const output = page.getByLabel("Generated password");
+    const card = pwgen(page);
+    const output = card.getByLabel("Generated password");
 
-    await page.getByRole("slider").fill("64");
-    await page.getByLabel(/Lowercase letters/).uncheck();
-    await page.getByLabel(/Digits/).uncheck();
-    await page.getByLabel(/Symbols/).uncheck();
+    await card.getByRole("slider").fill("64");
+    await card.getByLabel(/Lowercase letters/).uncheck();
+    await card.getByLabel(/Digits/).uncheck();
+    await card.getByLabel(/Symbols/).uncheck();
 
-    await page.getByRole("button", { name: "Generate" }).click();
+    await card.getByRole("button", { name: "Generate" }).click();
     const value = await output.inputValue();
     expect(value.length).toBe(64);
     expect(value).toMatch(/^[A-Z]+$/);
 
     // Turning everything off disables Generate and warns.
-    await page.getByLabel(/Uppercase letters/).uncheck();
-    await expect(page.getByRole("button", { name: "Generate" })).toBeDisabled();
+    await card.getByLabel(/Uppercase letters/).uncheck();
+    await expect(card.getByRole("button", { name: "Generate" })).toBeDisabled();
     await expect(
-      page.getByText("Select at least one character type."),
+      card.getByText("Select at least one character type."),
     ).toBeVisible();
   });
 
   test("copy button announces via a live region", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/password-tools");
+    const card = pwgen(page);
 
-    await page.getByRole("button", { name: "Generate" }).click();
-    const value = await page.getByLabel("Generated password").inputValue();
+    await card.getByRole("button", { name: "Generate" }).click();
+    const value = await card.getByLabel("Generated password").inputValue();
 
-    await page
+    await card
       .getByRole("button", { name: "Copy password to clipboard" })
       .click();
 

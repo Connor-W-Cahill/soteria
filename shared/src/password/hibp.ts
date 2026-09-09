@@ -53,6 +53,13 @@ export function splitDigest(digest: string): DigestParts {
 export function findBreachCount(body: string, suffix: string): number {
   const target = suffix.trim().toUpperCase();
 
+  // Track the highest count across every matching line rather than returning on
+  // the first. HIBP does not currently emit a suffix twice, but if it ever did —
+  // or if a padding line for a suffix preceded its real entry — returning early
+  // would report a genuine breach as "not found". Taking the maximum costs
+  // nothing and removes the assumption.
+  let highest = 0;
+
   for (const rawLine of body.split("\n")) {
     const line = rawLine.trim();
 
@@ -73,10 +80,12 @@ export function findBreachCount(body: string, suffix: string): number {
     const count = Number.parseInt(line.slice(separator + 1), 10);
 
     // A padded entry is a real line with a zero count; treat it as not found.
-    return Number.isFinite(count) && count > 0 ? count : 0;
+    if (Number.isFinite(count) && count > highest) {
+      highest = count;
+    }
   }
 
-  return 0;
+  return highest;
 }
 
 export function rangeUrlFor(prefix: string): string {

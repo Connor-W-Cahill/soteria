@@ -126,6 +126,13 @@ preload`) when `NODE_ENV=production`. HSTS is off in development so
 - **helmet defaults are on**, plus `default-src 'none'` (the API serves JSON
   only), `Referrer-Policy: no-referrer`, and `Cross-Origin-Resource-Policy:
 same-site`.
+- **The client document carries its own CSP**, served by Azure Static Web Apps
+  from `client/public/staticwebapp.config.json` (generated from
+  `client/csp.mjs`; run `npm run csp:gen -w @soteria/client` after editing it).
+  `connect-src` is `'self' https://api.pwnedpasswords.com` only — this is what
+  enforces ADR-0007's "the password never leaves the browser" in the browser
+  itself. `vite preview` serves the identical policy; the dev server serves one
+  that differs only in the inline and HMR-socket allowances Vite needs.
 - **TLS 1.2 minimum** on both the App Service and the SQL server; FTPS is
   disabled.
 - **The database is reached over an encrypted connection.** The production

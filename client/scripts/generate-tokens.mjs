@@ -109,6 +109,20 @@ lines.push("  --touch-target: 44px;");
 lines.push("  --control-height: 36px;");
 lines.push("}");
 lines.push("");
+// DESIGN_SEED.md:48 requires touch targets of at least 44x44 below 768px, and
+// :34 "Inputs 36px tall on desktop, 44px on touch". components.css builds inputs,
+// buttons and icon buttons on --control-height, so raising it once here gives
+// every control the larger target. Doing it through the token is deliberate: the
+// alternative is each feature patching its own controls, which is how the gap
+// went unnoticed until /password-tools shipped (#82). axe cannot catch this —
+// WCAG 2.2 AA Target Size (Minimum) is only 24px.
+lines.push("/* Touch — precedence over the desktop control height */");
+lines.push("@media (max-width: 767px) {");
+lines.push("  :root {");
+lines.push("    --control-height: var(--touch-target);");
+lines.push("  }");
+lines.push("}");
+lines.push("");
 
 const darkVars = [
   `  --color-primary: ${invert(c.primary)};`,
