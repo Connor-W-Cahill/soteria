@@ -16,7 +16,11 @@
     "lint": "eslint . && prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:migrate": "npm run db:migrate -w @soteria/server",
+    "db:rollback": "npm run db:rollback -w @soteria/server",
+    "db:seed": "npm run db:seed -w @soteria/server",
+    "db:ensure": "npm run db:ensure -w @soteria/server"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
