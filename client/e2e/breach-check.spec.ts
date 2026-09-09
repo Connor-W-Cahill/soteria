@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { recordAnonymity } from "./support/anonymity";
+
 /**
  * US-01's core acceptance criterion: the password never leaves the browser.
  *
@@ -30,7 +32,9 @@ interface SeenRequest {
 async function instrument(page: import("@playwright/test").Page) {
   const requests: SeenRequest[] = [];
 
-  page.on("request", (request) => {
+  // Context scope, not page scope: `page.on("request")` does not report requests
+  // originating in a service worker (#80).
+  page.context().on("request", (request) => {
     requests.push({
       url: request.url(),
       method: request.method(),
@@ -132,6 +136,54 @@ test.describe("US-01 private breach check", () => {
       expect(haystack).not.toContain(SECRET_SHA1);
       expect(haystack).not.toContain(SUFFIX);
       expect(haystack.toLowerCase()).not.toContain(SUFFIX.toLowerCase());
+    }
+  });
+
+  /**
+   * The assertion ADR-0007 actually needs, and the one #80 showed was missing.
+   *
+   * Every other test here asserts the moment the verdict becomes visible and then
+   * ends, so anything deferred escapes. A `navigator.sendBeacon` on a 1.5 s timer
+   * sent the plaintext password to an arbitrary origin while all 16 tests stayed
+   * green. This one keeps recording past the verdict, waits out deferred timers,
+   * and closes the page — which flushes `keepalive`, `pagehide` and beacon
+   * traffic — before asserting.
+   *
+   * It reuses US-15's recorder rather than growing a second one, so both stories'
+   * anonymity claims rest on the same audited implementation. That recorder
+   * asserts the ABSENCE OF A REQUEST rather than the absence of a string in its
+   * body, which matters because `request.postData()` is null for a `Blob` or
+   * `ArrayBuffer` beacon — a body scan sees nothing at all.
+   */
+  test("nothing leaves the page after the verdict, to any origin", async ({
+    page,
+  }) => {
+    const recorder = recordAnonymity(page.context());
+
+    await page.route("https://api.pwnedpasswords.com/**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/plain",
+        body: [`${SUFFIX}:4821`, "0018A45C4D1DEF81644B54AB7F969B88D65:0"].join(
+          "\r\n",
+        ),
+      }),
+    );
+
+    await page.goto("/password-tools");
+    await page.getByLabel("Password to check").fill(SECRET);
+    await page.getByRole("button", { name: "Check password" }).click();
+    await expect(verdict(page, "Found in known breaches")).toBeVisible();
+
+    // Keep listening well past the verdict, then flush on close.
+    await recorder.settle(page);
+    await recorder.assertAnonymous(page.context());
+
+    // And nothing recorded — before or after the verdict — carried the secret.
+    for (const request of recorder.requests) {
+      expect(request.url).not.toContain(SECRET);
+      expect(request.url).not.toContain(SECRET_SHA1);
+      expect(request.url).not.toContain(SUFFIX);
     }
   });
 
