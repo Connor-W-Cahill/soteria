@@ -48,6 +48,19 @@ suite("initial schema migration", () => {
     }
   });
 
+  /**
+   * Columns whose names trip the credential pattern but provably hold no
+   * credential. Every entry needs a stated reason, so the list cannot grow
+   * silently — which is the whole value of the assertion below. Widening the
+   * pattern instead would have been the easy fix and the wrong one.
+   */
+  const NAMED_EXCEPTIONS = new Map([
+    [
+      "token_version",
+      "users.token_version is an integer session-revocation counter (US-14). No token material is stored; see the type assertion below.",
+    ],
+  ]);
+
   it("stores no column that could hold a credential", async () => {
     const rows = await db<{ COLUMN_NAME: string }>(
       "INFORMATION_SCHEMA.COLUMNS",
@@ -55,8 +68,26 @@ suite("initial schema migration", () => {
     const forbidden = /password|passphrase|secret|credential|hash|token/i;
 
     expect(
-      rows.map((row) => row.COLUMN_NAME).filter((name) => forbidden.test(name)),
+      rows
+        .map((row) => row.COLUMN_NAME)
+        .filter((name) => forbidden.test(name))
+        .filter((name) => !NAMED_EXCEPTIONS.has(name)),
     ).toEqual([]);
+  });
+
+  it("keeps token_version an integer, so the exception cannot hide a token", async () => {
+    // Without this, the exception above would be a hole: someone could later
+    // change the column to a varchar and store an actual token in it while the
+    // credential assertion stayed green.
+    const rows = await db("INFORMATION_SCHEMA.COLUMNS")
+      .where({ COLUMN_NAME: "token_version" })
+      .select<Array<{ DATA_TYPE: string; TABLE_NAME: string }>>(
+        "DATA_TYPE",
+        "TABLE_NAME",
+      );
+
+    expect(rows.map((row) => row.TABLE_NAME)).toEqual(["users"]);
+    expect(rows.map((row) => row.DATA_TYPE)).toEqual(["int"]);
   });
 
   it("cascades every user-owned row when the account is deleted", async () => {

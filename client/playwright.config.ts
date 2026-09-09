@@ -119,5 +119,15 @@ export default defineConfig({
     // whatever code that other server happens to be serving.
     reuseExistingServer: false,
     timeout: 120_000,
+    env: {
+      // A placeholder client id so the Google Identity script is actually
+      // requested on /signin (US-14). Without one the button short-circuits to
+      // "not configured" and signin.spec.ts could not tell a working lazy load
+      // from a silently broken one. It authenticates nothing: sign-in cannot
+      // complete against it, and no test tries to.
+      VITE_GOOGLE_CLIENT_ID:
+        process.env.VITE_GOOGLE_CLIENT_ID ??
+        "e2e-placeholder.apps.googleusercontent.com",
+    },
   },
 });

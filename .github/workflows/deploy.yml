@@ -40,6 +40,10 @@ jobs:
         run: npm run build -w @soteria/client
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          # Vite inlines this at build time, so it has to be here rather than an
+          # App Service setting. Public by design; it must match the id the API
+          # verifies the token audience against (docs/deploy.md).
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       # The API is deployed as a self-contained bundle: compiled JS plus the
       # production dependency tree, with no build step on App Service.

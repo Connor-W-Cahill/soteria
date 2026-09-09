@@ -18,15 +18,48 @@ function directives(csp: string): Map<string, string[]> {
 describe("production CSP", () => {
   const prod = directives(PROD_CSP);
 
-  it("limits connect-src to the app origin and HIBP, and nothing else", () => {
+  it("limits connect-src to the app origin, HIBP and Google sign-in, and nothing else", () => {
+    // The exact list, not a `toContain`: this test exists to fail when a new
+    // third-party origin is added, so that ADR-0007's promise is re-argued
+    // rather than quietly widened. accounts.google.com was added by US-14 and
+    // is justified in ADR-0008; it never receives password-derived data.
     expect(prod.get("connect-src")).toEqual([
       "'self'",
       "https://api.pwnedpasswords.com",
+      "https://accounts.google.com",
     ]);
   });
 
-  it("allows no inline or remote script", () => {
-    expect(prod.get("script-src")).toEqual(["'self'"]);
+  it("is the only password-data destination in connect-src", () => {
+    // The claim the privacy page makes: HIBP is the one third party that ever
+    // sees anything derived from a password. Sign-in is a separate flow on a
+    // separate page and carries no password material at all.
+    const thirdParties = (prod.get("connect-src") ?? []).filter(
+      (source) => source !== "'self'",
+    );
+
+    expect(thirdParties).toContain("https://api.pwnedpasswords.com");
+    expect(thirdParties).toHaveLength(2);
+  });
+
+  it("allows no inline script, and remote script only from Google sign-in", () => {
+    expect(prod.get("script-src")).toEqual([
+      "'self'",
+      "https://accounts.google.com",
+    ]);
+    expect(prod.get("script-src")).not.toContain("'unsafe-inline'");
+  });
+
+  it("frames only the Google sign-in origin", () => {
+    expect(prod.get("frame-src")).toEqual(["https://accounts.google.com"]);
+  });
+
+  it("allows the fonts and Google sign-in stylesheets, and no others", () => {
+    expect(prod.get("style-src")).toEqual([
+      "'self'",
+      "https://fonts.googleapis.com",
+      "https://accounts.google.com",
+    ]);
   });
 
   it("carries the hardening directives from the issue", () => {
@@ -61,7 +94,11 @@ describe("dev CSP", () => {
       dev.filter(
         (s) => !s.startsWith("ws://") && !s.startsWith("http://localhost"),
       ),
-    ).toEqual(["'self'", "https://api.pwnedpasswords.com"]);
+    ).toEqual([
+      "'self'",
+      "https://api.pwnedpasswords.com",
+      "https://accounts.google.com",
+    ]);
   });
 
   it("adds inline allowances only where Vite needs them", () => {

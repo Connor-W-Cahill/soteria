@@ -10,6 +10,7 @@ import "./styles/password.css";
 
 import { App } from "./App";
 import { ToastProvider, applyStoredTheme } from "./components";
+import { SessionProvider } from "./session";
 
 applyStoredTheme();
 
@@ -23,9 +24,11 @@ ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <QueryClientProvider client={new QueryClient()}>
       <BrowserRouter>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <SessionProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </SessionProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>,

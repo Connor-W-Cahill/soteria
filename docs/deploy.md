@@ -86,8 +86,30 @@ script output or the Azure portal. **None of these ever goes in the repository.*
 | `VITE_API_URL`                    | `infra/deploy.sh` output                                                  | Baked into the client build so it calls the right API. |
 | `API_URL`                         | Same value as `VITE_API_URL`                                              | The post-deploy health check.                          |
 | `DATABASE_URL`                    | Built from the SQL FQDN and the admin password                            | Running migrations during deploy.                      |
+| `GOOGLE_CLIENT_ID`                | Google Cloud console → Credentials → OAuth 2.0 Client ID (Web)            | Verifying ID tokens, and baked into the client build.  |
+| `SESSION_SECRET`                  | `openssl rand -base64 48`                                                 | Signing Soteria's own session cookies.                 |
 
 Add `NVD_API_KEY` alongside these when Phase 6 lands (see the runbook).
+
+### Google sign-in (US-14)
+
+Create the OAuth client in the Google Cloud console as an **application type of
+Web application**, and list the deployed client origin under _Authorised
+JavaScript origins_ — Google Identity refuses to render its button on an origin
+it does not recognise, which is the most common reason sign-in "silently does
+nothing".
+
+Both `GOOGLE_CLIENT_ID` and `SESSION_SECRET` must also be set as **App Service
+settings**, not only as GitHub secrets: the API reads them at startup and
+`createApp` throws if either is missing. That is deliberate — a server that
+cannot verify a Google token must fail to start rather than start with the check
+disabled. `SESSION_SECRET` must be at least 32 bytes; rotating it signs everyone
+out, which is the intended emergency lever.
+
+The client needs the same client id at **build** time as `VITE_GOOGLE_CLIENT_ID`,
+because Vite inlines it. It is not a secret — it is public by design — but it
+must match the value the API verifies against, or every sign-in fails the
+audience check.
 
 Protect the `production` environment with a required reviewer so a deploy cannot
 happen without a human.
