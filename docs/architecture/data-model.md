@@ -265,6 +265,7 @@ npm run db:ensure                 # create the database if it does not exist
 npm run db:migrate                # apply migrations
 npm run db:seed                   # load shared/catalog/products.json
 npm run db:rollback               # undo the last batch
+npm run db:status                 # current migration version
 ```
 
 Against Azure SQL, set `DATABASE_URL` to the Azure connection URL with

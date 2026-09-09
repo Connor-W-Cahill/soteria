@@ -36,6 +36,7 @@ the `mssql` driver. `DATABASE_URL` carries the connection (see `.env.example`).
 - `npm run db:ensure` creates the database if it does not exist (local and CI only).
 - `npm run db:migrate` applies migrations from `server/src/db/migrations`.
 - `npm run db:rollback` undoes the last migration batch.
+- `npm run db:status` prints the current migration version.
 - `npm run db:seed` loads `shared/catalog/products.json` into `products`.
 
 The schema, its privacy invariants, and the ERD are documented in
