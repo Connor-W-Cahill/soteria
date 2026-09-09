@@ -23,6 +23,7 @@ export const ERROR_CODES = [
   "unauthorized",
   "forbidden",
   "not_found",
+  "conflict",
   "payload_too_large",
   "rate_limited",
   "internal_error",
@@ -36,6 +37,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   unauthorized: 401,
   forbidden: 403,
   not_found: 404,
+  conflict: 409,
   payload_too_large: 413,
   rate_limited: 429,
   internal_error: 500,
@@ -71,6 +73,11 @@ export class ApiError extends Error {
 
   static notFound(message = "That resource does not exist."): ApiError {
     return new ApiError("not_found", message);
+  }
+
+  /** The request is valid but collides with state that already exists. */
+  static conflict(message: string): ApiError {
+    return new ApiError("conflict", message);
   }
 
   toEnvelope(): ErrorEnvelope {
