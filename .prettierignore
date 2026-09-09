@@ -8,3 +8,8 @@ docs/design/DESIGN_SEED.md
 docs/plan/IMPLEMENTATION_PLAN.md
 docs/plan/ISSUE_BACKLOG.md
 docs/plan/render-backlog.mjs
+
+# Generated from docs/design/derive-seed.mjs — see client/scripts/generate-tokens.mjs
+client/src/styles/tokens.css
+client/playwright-report
+client/test-results
