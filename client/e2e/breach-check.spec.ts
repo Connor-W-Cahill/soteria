@@ -79,6 +79,19 @@ function isFontAsset(url: string): boolean {
   return FONT_ORIGINS.some((origin) => url.startsWith(origin));
 }
 
+/**
+ * A result card's heading, matched exactly.
+ *
+ * `getByText` is a case-insensitive substring match, so "Found in known
+ * breaches" also matches the "Not found in known breaches" card — which makes
+ * any assertion that one is absent while the other is present quietly wrong.
+ * Matching the heading by exact name is what keeps the negative assertions
+ * meaningful.
+ */
+function verdict(page: import("@playwright/test").Page, title: string) {
+  return page.getByRole("heading", { name: title, exact: true });
+}
+
 test.describe("US-01 private breach check", () => {
   test("sends only the 5-character hash prefix, and only to HIBP", async ({
     page,
@@ -212,10 +225,148 @@ test.describe("US-01 private breach check", () => {
     await page.goto("/password-tools");
     await page.getByLabel("Password to check").fill(SECRET);
 
-    await page.getByRole("link", { name: "Dashboard" }).click();
+    // "Learn" rather than "Dashboard": US-15 (#24) hides account-only tabs from a
+    // signed-out visitor, and Dashboard is one of them. Learn and Password Tools
+    // both stay visible signed out, so this navigation works either way and the
+    // test's intent — leave the page, come back, field is empty — is unchanged.
+    await page.getByRole("link", { name: "Learn", exact: true }).click();
     await page.getByRole("link", { name: "Password Tools" }).click();
 
     await expect(page.getByLabel("Password to check")).toHaveValue("");
+  });
+
+  /**
+   * Holds the range response open until `release()` is called.
+   *
+   * `settled()` resolves once the handler has finished trying to deliver that
+   * response. It deliberately does not wait on a Playwright `response` event: a
+   * request the page has aborted never produces one, so waiting for a response
+   * would hang forever exactly when the fix is working.
+   */
+  async function heldRangeResponse(page: import("@playwright/test").Page) {
+    let release: (() => void) | undefined;
+    let delivered = false;
+
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    await page.route("https://api.pwnedpasswords.com/**", async (route) => {
+      await held;
+
+      try {
+        await route.fulfill({
+          status: 200,
+          contentType: "text/plain",
+          // SECRET is breached, so a wrongly-rendered verdict says so loudly.
+          body: [
+            `${SUFFIX}:4821`,
+            "0018A45C4D1DEF81644B54AB7F969B88D65:0",
+          ].join("\r\n"),
+        });
+      } catch {
+        // The page aborted the request, so there is nothing left to fulfil.
+        // That is the passing path, not an error.
+      }
+
+      delivered = true;
+    });
+
+    return {
+      release: () => release?.(),
+      settled: async () => {
+        await expect.poll(() => delivered, { timeout: 10_000 }).toBe(true);
+      },
+    };
+  }
+
+  test("discards a verdict for a password the user replaced mid-check", async ({
+    page,
+  }) => {
+    const range = await heldRangeResponse(page);
+
+    await page.goto("/password-tools");
+    const field = page.getByLabel("Password to check");
+
+    await field.fill(SECRET);
+    await page.getByRole("button", { name: "Check password" }).click();
+    await expect(page.getByRole("button", { name: "Checking…" })).toBeVisible();
+
+    // Replace the password while the check for the old value is still running.
+    await field.fill("a-completely-different-password");
+
+    // Let the superseded response be delivered, then give React a moment to
+    // apply anything it caused. Without this settle the assertions below could
+    // run before the response was processed at all, and would prove nothing.
+    range.release();
+    await range.settled();
+    await page.waitForTimeout(500);
+
+    // The response belongs to a password the field no longer holds, so no
+    // verdict may be rendered. "Found" would be wrong; "Not found" is the
+    // dangerous direction, telling the user a value was cleared when it was
+    // never checked. Assert all three cards are absent.
+    await expect(verdict(page, "Found in known breaches")).toHaveCount(0);
+    await expect(verdict(page, "Not found in known breaches")).toHaveCount(0);
+    await expect(verdict(page, "Breach status unavailable")).toHaveCount(0);
+    await expect(field).toHaveValue("a-completely-different-password");
+  });
+
+  test("releases the control as soon as the password is edited mid-check", async ({
+    page,
+  }) => {
+    const range = await heldRangeResponse(page);
+
+    await page.goto("/password-tools");
+    const field = page.getByLabel("Password to check");
+
+    await field.fill(SECRET);
+    await page.getByRole("button", { name: "Check password" }).click();
+    await expect(page.getByRole("button", { name: "Checking…" })).toBeVisible();
+
+    await field.fill("a-completely-different-password");
+
+    // The edited value can be checked immediately; the user is not made to wait
+    // on a request whose result has already been discarded.
+    await expect(
+      page.getByRole("button", { name: "Check password" }),
+    ).toBeEnabled();
+
+    range.release();
+  });
+
+  test("still reports the newest verdict after a superseded check", async ({
+    page,
+  }) => {
+    // Guards against over-correcting: superseding must discard the stale result
+    // without suppressing the one that replaces it.
+    let calls = 0;
+
+    await page.route("https://api.pwnedpasswords.com/**", async (route) => {
+      calls += 1;
+      const first = calls === 1;
+      if (first) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "text/plain",
+        body: first
+          ? `${SUFFIX}:4821`
+          : "0018A45C4D1DEF81644B54AB7F969B88D65:9",
+      });
+    });
+
+    await page.goto("/password-tools");
+    const field = page.getByLabel("Password to check");
+
+    await field.fill(SECRET);
+    await page.getByRole("button", { name: "Check password" }).click();
+    await field.fill("a-completely-different-password");
+    await page.getByRole("button", { name: "Check password" }).click();
+
+    await expect(verdict(page, "Not found in known breaches")).toBeVisible();
+    await expect(verdict(page, "Found in known breaches")).toHaveCount(0);
   });
 
   test("has no axe violations", async ({ page }) => {
