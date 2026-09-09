@@ -1,0 +1,122 @@
+/* US-16 posture questionnaire. Tokens only — no literal colors/fonts/radii/space. */
+
+.sot-qz-page {
+  max-width: 40rem;
+}
+
+.sot-qz-page__lede {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-0);
+  line-height: var(--line-body);
+}
+
+.sot-qz {
+  max-width: 40rem;
+}
+
+.sot-qz__status {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-0);
+}
+
+.sot-qz__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.sot-qz__progress-label {
+  font-size: var(--font-size-0);
+  font-weight: var(--weight-body-bold);
+}
+
+.sot-qz__progress-track {
+  display: block;
+  width: 100%;
+  height: var(--space-2);
+  background: var(--color-surface-alt);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.sot-qz__progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-primary-strong);
+  transition: width var(--motion-duration) var(--motion-ease);
+}
+
+.sot-qz__heading {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2);
+  line-height: var(--line-heading);
+}
+
+.sot-qz__heading:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-primary);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.sot-qz__questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.sot-qz__questions .sot-field__label {
+  font-size: var(--font-size-0);
+}
+
+.sot-qz__error,
+.sot-qz__note {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  font-size: var(--font-size-0);
+  line-height: var(--line-body);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.sot-qz__error {
+  border-color: var(--color-severity-high);
+}
+
+.sot-qz__note {
+  background: var(--color-surface-alt);
+}
+
+.sot-qz__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.sot-qz__actions .sot-btn:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 767px) {
+  .sot-qz__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sot-qz__actions .sot-btn {
+    width: 100%;
+    min-height: var(--touch-target);
+  }
+
+  .sot-qz__actions .sot-btn:last-child {
+    margin-left: 0;
+  }
+
+  .sot-qz__questions .sot-select {
+    min-height: var(--touch-target);
+  }
+}

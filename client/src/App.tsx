@@ -9,6 +9,7 @@ const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
 const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 const SignIn = lazy(() => import("./routes/SignIn"));
+const Questionnaire = lazy(() => import("./routes/Questionnaire"));
 const Settings = lazy(() => import("./routes/Settings"));
 
 function Placeholder({ title }: { title: string }) {
@@ -34,6 +35,14 @@ export function App() {
           <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           <Route path="/signin" element={<SignIn />} />
           <Route
+            path="/questionnaire"
+            element={
+              <RequireSession>
+                <Questionnaire />
+              </RequireSession>
+            }
+          />
+          <Route
             path="/settings"
             element={
               <RequireSession>
@@ -41,25 +50,30 @@ export function App() {
               </RequireSession>
             }
           />
-          {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
-            (item) => (
-              <Route
-                key={item.to}
-                path={item.to}
-                element={
-                  // Account-only destinations redirect to /signin?next=; the
-                  // anonymous tools and Learn stay reachable without a session.
-                  item.accountOnly === true ? (
-                    <RequireSession>
-                      <Placeholder title={item.label} />
-                    </RequireSession>
-                  ) : (
+          {/* Both real pages above are registered explicitly. /questionnaire is
+              also a NAV_ITEMS entry, so it is filtered out below to avoid a
+              second, placeholder registration; /settings is reached from the
+              account menu rather than the nav, so it needs no filter. */}
+          {NAV_ITEMS.filter(
+            (item) =>
+              item.to !== "/password-tools" && item.to !== "/questionnaire",
+          ).map((item) => (
+            <Route
+              key={item.to}
+              path={item.to}
+              element={
+                // Account-only destinations redirect to /signin?next=; the
+                // anonymous tools and Learn stay reachable without a session.
+                item.accountOnly === true ? (
+                  <RequireSession>
                     <Placeholder title={item.label} />
-                  )
-                }
-              />
-            ),
-          )}
+                  </RequireSession>
+                ) : (
+                  <Placeholder title={item.label} />
+                )
+              }
+            />
+          ))}
           {DevKit ? <Route path="/dev/kit" element={<DevKit />} /> : null}
           <Route path="*" element={<Placeholder title="This page" />} />
         </Routes>
