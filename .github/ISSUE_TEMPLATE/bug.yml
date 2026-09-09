@@ -4,14 +4,14 @@ title: "Bug: "
 labels:
   - type:bug
 body:
-  - type:textarea
+  - type: textarea
     id: description
     attributes:
       label: Description
       description: What happened, and what did you expect instead?
     validations:
       required: true
-  - type:textarea
+  - type: textarea
     id: reproduction
     attributes:
       label: Steps to reproduce
@@ -21,14 +21,14 @@ body:
         3. Observe ...
     validations:
       required: true
-  - type:textarea
+  - type: textarea
     id: environment
     attributes:
       label: Environment
       description: Browser, device, commit, and any other relevant context.
     validations:
       required: true
-  - type:textarea
+  - type: textarea
     id: evidence
     attributes:
       label: Evidence

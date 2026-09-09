@@ -4,7 +4,7 @@ title: "US-XX "
 labels:
   - type:story
 body:
-  - type:textarea
+  - type: textarea
     id: story
     attributes:
       label: User story
@@ -12,7 +12,7 @@ body:
       placeholder: As a ... I want ... so that ...
     validations:
       required: true
-  - type:textarea
+  - type: textarea
     id: acceptance
     attributes:
       label: Acceptance criteria
@@ -20,7 +20,7 @@ body:
       placeholder: "- [ ] ..."
     validations:
       required: true
-  - type:textarea
+  - type: textarea
     id: dependencies
     attributes:
       label: Dependencies
