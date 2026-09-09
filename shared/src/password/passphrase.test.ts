@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +17,63 @@ import {
   type PassphraseOptions,
   uniformIndex,
 } from "./passphrase";
+
+const WORDS = new Set(EFF_LARGE_WORDLIST);
+
+/**
+ * Segment `phrase` into exactly `words` wordlist entries joined by `separator`,
+ * returning them with their original casing, or null if it cannot be done.
+ *
+ * Splitting on the separator is NOT a valid way to do this, because the EFF list
+ * contains four hyphenated entries — drop-down, felt-tip, t-shirt, yo-yo — and
+ * "-" is an offered separator. `"t-shirt-abacus".split("-")` yields three pieces,
+ * two of which are not words, so a split-based test failed about 10% of runs
+ * against a perfectly correct generator (#99).
+ *
+ * Matching is done on a lower-cased copy so capitalized phrases segment too;
+ * lower-casing preserves length, so the offsets still index the original.
+ *
+ * Module-scoped on purpose. #99 put it inside one describe and fixed only the
+ * three sites in that block; three more lived in other describes where it was
+ * not even in scope, and each surfaced as a separate flake investigation (#108).
+ * The guard test at the bottom of this file now fails if a split-based count is
+ * reintroduced anywhere in it.
+ *
+ * A near-identical copy lives in client/e2e/support/passphrase.ts for the
+ * Playwright suite, which cannot import a test-only module across workspaces.
+ * Change both.
+ */
+export function segmentPassphrase(
+  phrase: string,
+  separator: string,
+  words: number,
+): string[] | null {
+  const lower = phrase.toLowerCase();
+
+  const solve = (from: number, remaining: number): string[] | null => {
+    if (remaining === 1) {
+      return WORDS.has(lower.slice(from)) ? [phrase.slice(from)] : null;
+    }
+
+    for (
+      let at = lower.indexOf(separator, from);
+      at !== -1;
+      at = lower.indexOf(separator, at + 1)
+    ) {
+      if (WORDS.has(lower.slice(from, at))) {
+        const rest = solve(at + separator.length, remaining - 1);
+
+        if (rest !== null) {
+          return [phrase.slice(from, at), ...rest];
+        }
+      }
+    }
+
+    return null;
+  };
+
+  return solve(0, words);
+}
 
 const BASE: PassphraseOptions = {
   words: 6,
@@ -123,7 +182,8 @@ describe("generatePassphrase — word count bounds", () => {
   it("returns the requested number of words", () => {
     for (const words of [3, 4, 6, 8]) {
       const phrase = generatePassphrase({ ...BASE, words, separator: "-" });
-      expect(phrase.split("-")).toHaveLength(words);
+      // Not split("-").length — see segmentPassphrase.
+      expect(segmentPassphrase(phrase, "-", words), phrase).not.toBeNull();
     }
   });
 
@@ -152,72 +212,27 @@ describe("generatePassphrase — word count bounds", () => {
 describe("generatePassphrase — formatting", () => {
   const wordSet = new Set(EFF_LARGE_WORDLIST);
 
-  /**
-   * Segment `phrase` into exactly `words` wordlist entries joined by `separator`,
-   * returning them with their original casing, or null if it cannot be done.
-   *
-   * Splitting on the separator is NOT a valid way to do this, because the EFF list
-   * contains four hyphenated entries — drop-down, felt-tip, t-shirt, yo-yo — and
-   * "-" is an offered separator. `"t-shirt-abacus".split("-")` yields three pieces,
-   * two of which are not words, so a split-based test failed about 10% of runs
-   * against a perfectly correct generator (#99).
-   *
-   * Matching is done on a lower-cased copy so capitalized phrases segment too;
-   * lower-casing preserves length, so the offsets still index the original.
-   */
-  function segment(
-    phrase: string,
-    separator: string,
-    words: number,
-  ): string[] | null {
-    const lower = phrase.toLowerCase();
-
-    const solve = (from: number, remaining: number): string[] | null => {
-      if (remaining === 1) {
-        return wordSet.has(lower.slice(from)) ? [phrase.slice(from)] : null;
-      }
-
-      for (
-        let at = lower.indexOf(separator, from);
-        at !== -1;
-        at = lower.indexOf(separator, at + 1)
-      ) {
-        if (wordSet.has(lower.slice(from, at))) {
-          const rest = solve(at + separator.length, remaining - 1);
-
-          if (rest !== null) {
-            return [phrase.slice(from, at), ...rest];
-          }
-        }
-      }
-
-      return null;
-    };
-
-    return solve(0, words);
-  }
-
   it("segments correctly, including hyphenated entries (guards the helper)", () => {
     expect(wordSet.has("t-shirt")).toBe(true);
     expect(wordSet.has("yo-yo")).toBe(true);
 
     // A hyphenated entry inside a hyphen-separated phrase is still one word.
-    expect(segment("t-shirt-abacus-zoom", "-", 3)).toEqual([
+    expect(segmentPassphrase("t-shirt-abacus-zoom", "-", 3)).toEqual([
       "t-shirt",
       "abacus",
       "zoom",
     ]);
     // Capitalized, and with two hyphenated entries. This is the deterministic
     // cover for #99: it does not depend on a hyphenated word being drawn.
-    expect(segment("T-shirt-Abacus-Zoom-Yo-yo", "-", 4)).toEqual([
+    expect(segmentPassphrase("T-shirt-Abacus-Zoom-Yo-yo", "-", 4)).toEqual([
       "T-shirt",
       "Abacus",
       "Zoom",
       "Yo-yo",
     ]);
     // And it must not accept just anything.
-    expect(segment("abacus-notaword-zoom", "-", 3)).toBeNull();
-    expect(segment("abacus-zoom", "-", 3)).toBeNull();
+    expect(segmentPassphrase("abacus-notaword-zoom", "-", 3)).toBeNull();
+    expect(segmentPassphrase("abacus-zoom", "-", 3)).toBeNull();
   });
 
   it("joins with the chosen separator and draws every word from the list", () => {
@@ -229,7 +244,7 @@ describe("generatePassphrase — formatting", () => {
           separator: value,
         });
 
-        expect(segment(phrase, value, 5), phrase).not.toBeNull();
+        expect(segmentPassphrase(phrase, value, 5), phrase).not.toBeNull();
       }
     }
   });
@@ -243,7 +258,7 @@ describe("generatePassphrase — formatting", () => {
           separator: value,
           capitalize: true,
         });
-        const drawn = segment(phrase, value, 4);
+        const drawn = segmentPassphrase(phrase, value, 4);
 
         expect(drawn, phrase).not.toBeNull();
 
@@ -284,7 +299,7 @@ describe("generatePassphrase — formatting", () => {
       // Four list entries are hyphenated (drop-down, felt-tip, t-shirt, yo-yo)
       // and "-" is BASE's separator, so a naive split fragments them. segment
       // recovers the six drawn entries instead.
-      const drawn = segment(phrase, "-", 6);
+      const drawn = segmentPassphrase(phrase, "-", 6);
 
       expect(drawn, phrase).not.toBeNull();
 
@@ -339,8 +354,15 @@ describe("generatePassphrase — distribution sanity", () => {
     // With 8 draws from 7776, P(a repeat) ≈ 0.0036 per phrase, so ~1 in 280.
     let sawRepeat = false;
     for (let i = 0; i < 20_000 && !sawRepeat; i++) {
-      const parts = generatePassphrase({ ...BASE, words: 8 }).split("-");
-      if (new Set(parts).size < parts.length) sawRepeat = true;
+      const parts = segmentPassphrase(
+        generatePassphrase({ ...BASE, words: 8 }),
+        "-",
+        8,
+      );
+      // A hyphenated entry would otherwise fragment into pieces that look like
+      // extra words, making a false "repeat" likelier than the stated 1-in-280.
+      if (parts !== null && new Set(parts).size < parts.length)
+        sawRepeat = true;
     }
     expect(sawRepeat).toBe(true);
   });
@@ -389,7 +411,14 @@ describe("generatePassphrase — no I/O, nothing persisted", () => {
       includeDigit: true,
     });
 
-    expect(phrase.split("-")).toHaveLength(8);
+    // The last word carries a digit, so it is not a bare list entry; segment the
+    // first seven and check the eighth separately.
+    const cut = phrase.lastIndexOf("-");
+    expect(
+      segmentPassphrase(phrase.slice(0, cut), "-", 7),
+      phrase,
+    ).not.toBeNull();
+    expect(phrase.slice(cut + 1)).toMatch(/^[a-z-]+[0-9]$/);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(xhrSpy).not.toHaveBeenCalled();
     expect(storage.setItem).not.toHaveBeenCalled();
@@ -401,5 +430,34 @@ describe("generatePassphrase — no I/O, nothing persisted", () => {
         }
       ).sendBeacon,
     ).not.toHaveBeenCalled();
+  });
+});
+
+describe("this test file itself", () => {
+  /**
+   * The recurrence guard for #99, #101, #102 and #108.
+   *
+   * That defect was fixed three separate times because each investigation fixed
+   * only the sites its failing runs happened to point at: #99 fixed three inside
+   * one describe, #102 found two more in the Playwright spec, and #108 found
+   * three more here, in describes where the helper was not even in scope. Every
+   * one was the same mistake, and every one cost a flake investigation.
+   *
+   * This assertion would have caught all of them at once, the first time. It
+   * reads this file's own source and fails if a passphrase is split on a
+   * separator the wordlist can contain, outside a comment.
+   */
+  it("never counts passphrase words by splitting on a separator", () => {
+    const source = readFileSync(fileURLToPath(import.meta.url), "utf8");
+    const offenders = source
+      .split("\n")
+      .map((line, index) => ({ line: line.trim(), number: index + 1 }))
+      .filter(({ line }) => !line.startsWith("*") && !line.startsWith("//"))
+      .filter(({ line }) => /\.split\(\s*["'`]-["'`]\s*\)/.test(line));
+
+    expect(
+      offenders,
+      "use segmentPassphrase instead; see its doc comment",
+    ).toEqual([]);
   });
 });
