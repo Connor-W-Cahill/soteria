@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "playwright": "playwright test"
+    "playwright": "playwright test",
+    "tokens:gen": "node scripts/generate-tokens.mjs"
   },
   "dependencies": {
     "@soteria/shared": "0.1.0",
@@ -18,6 +19,7 @@
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
     "@playwright/test": "^1.55.0",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",

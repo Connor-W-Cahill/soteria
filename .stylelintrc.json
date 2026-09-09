@@ -1,0 +1,33 @@
+{
+  "ignoreFiles": ["**/dist/**", "**/node_modules/**", "**/coverage/**"],
+  "rules": {
+    "color-no-hex": true,
+    "color-named": "never",
+    "function-disallowed-list": [
+      "rgb",
+      "rgba",
+      "hsl",
+      "hsla",
+      "hwb",
+      "lab",
+      "lch",
+      "oklab",
+      "oklch",
+      "color"
+    ],
+    "declaration-property-value-disallowed-list": {
+      "/.*/": ["/#[0-9a-fA-F]{3,8}\\b/"]
+    }
+  },
+  "overrides": [
+    {
+      "files": ["client/src/styles/tokens.css"],
+      "rules": {
+        "color-no-hex": null,
+        "color-named": null,
+        "function-disallowed-list": null,
+        "declaration-property-value-disallowed-list": null
+      }
+    }
+  ]
+}
