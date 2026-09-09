@@ -22,8 +22,9 @@ export const SESSION_COOKIE = "soteria_session";
  * on `*.azurestaticapps.net` and the API an App Service on
  * `*.azurewebsites.net`, which are cross-site, so this cookie would be neither
  * stored nor sent in production. An earlier version of this comment asserted the
- * opposite. Tracked as a blocking bug; the fix is to serve both from one origin,
- * NOT to switch to `SameSite=None`, which would delete the CSRF control above.
+ * opposite. Tracked as issue #111, which blocks the production half of US-14;
+ * the fix is to serve both from one origin, NOT to switch to `SameSite=None`,
+ * which would delete the CSRF control above.
  */
 function attributes(config: AuthConfig) {
   return {
