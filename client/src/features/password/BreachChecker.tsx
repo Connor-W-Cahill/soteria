@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button, Card, IconButton } from "../../components";
 import { checkPassword, type BreachStatus } from "./breach-check";
@@ -7,6 +8,7 @@ import {
   type StrengthResult,
   type StrengthScore,
 } from "./strength-check";
+import { PrivacyExplainer } from "./PrivacyExplainer";
 
 /**
  * US-01 + US-04: check a password against Have I Been Pwned and estimate its
@@ -291,8 +293,15 @@ export function BreachChecker() {
         whether it has turned up in a known data breach. Your password is hashed
         in this browser; only the first five characters of that hash are sent to
         Have I Been Pwned. Soteria&rsquo;s own server never sees it.{" "}
-        <a href="/learn/password-privacy">How this works</a>
+        <Link to="/learn/password-privacy">
+          Read more about password privacy
+        </Link>
       </p>
+
+      <details className="pw-privacy__disclosure">
+        <summary>How this works</summary>
+        <PrivacyExplainer />
+      </details>
 
       <form className="pw-tool__form" onSubmit={onSubmit}>
         <div className="sot-field">
