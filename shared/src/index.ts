@@ -16,6 +16,17 @@ export interface MeResponse {
   user: SessionUser | null;
 }
 
+/**
+ * `GET /api/questionnaire` and the body returned by `PUT /api/questionnaire`
+ * (US-16). `answers` maps question id to chosen option id. `version` and
+ * `updatedAt` are null only before the user has ever answered.
+ */
+export interface QuestionnaireState {
+  version: string | null;
+  answers: Record<string, string>;
+  updatedAt: string | null;
+}
+
 export interface HealthResponse {
   status: "ok";
   version: string;
@@ -23,3 +34,4 @@ export interface HealthResponse {
 }
 
 export * from "./password/hibp.js";
+export * from "./scoring/questions.js";

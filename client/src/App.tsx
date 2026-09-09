@@ -9,6 +9,7 @@ const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
 const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 const SignIn = lazy(() => import("./routes/SignIn"));
+const Questionnaire = lazy(() => import("./routes/Questionnaire"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -32,25 +33,34 @@ export function App() {
           <Route path="/password-tools" element={<PasswordTools />} />
           <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           <Route path="/signin" element={<SignIn />} />
-          {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
-            (item) => (
-              <Route
-                key={item.to}
-                path={item.to}
-                element={
-                  // Account-only destinations redirect to /signin?next=; the
-                  // anonymous tools and Learn stay reachable without a session.
-                  item.accountOnly === true ? (
-                    <RequireSession>
-                      <Placeholder title={item.label} />
-                    </RequireSession>
-                  ) : (
+          <Route
+            path="/questionnaire"
+            element={
+              <RequireSession>
+                <Questionnaire />
+              </RequireSession>
+            }
+          />
+          {NAV_ITEMS.filter(
+            (item) =>
+              item.to !== "/password-tools" && item.to !== "/questionnaire",
+          ).map((item) => (
+            <Route
+              key={item.to}
+              path={item.to}
+              element={
+                // Account-only destinations redirect to /signin?next=; the
+                // anonymous tools and Learn stay reachable without a session.
+                item.accountOnly === true ? (
+                  <RequireSession>
                     <Placeholder title={item.label} />
-                  )
-                }
-              />
-            ),
-          )}
+                  </RequireSession>
+                ) : (
+                  <Placeholder title={item.label} />
+                )
+              }
+            />
+          ))}
           {DevKit ? <Route path="/dev/kit" element={<DevKit />} /> : null}
           <Route path="*" element={<Placeholder title="This page" />} />
         </Routes>

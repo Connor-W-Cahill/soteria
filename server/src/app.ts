@@ -13,6 +13,7 @@ import { requestId } from "./http/request-id.js";
 import { corsMiddleware, securityHeaders } from "./http/security.js";
 import { validate } from "./http/validate.js";
 import { requestLog } from "./logging/request-log.js";
+import { questionnaireRouter } from "./questionnaire/routes.js";
 
 const healthResponse = z.object({
   status: z.literal("ok"),
@@ -35,6 +36,8 @@ export interface AppOptions {
   authRouterOptions?: Omit<Parameters<typeof authRouter>[0], "config">;
   /** Overridable so route tests need no database. */
   loadSessionUser?: Parameters<typeof attachSession>[0]["loadUser"];
+  /** Overridable so questionnaire route tests need no database. */
+  questionnaireRouterOptions?: Parameters<typeof questionnaireRouter>[0];
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -69,6 +72,7 @@ export function createApp(options: AppOptions = {}) {
     }),
   );
   app.use(authRouter({ config: auth, ...options.authRouterOptions }));
+  app.use(questionnaireRouter(options.questionnaireRouterOptions));
 
   app.get(
     "/api/health",
