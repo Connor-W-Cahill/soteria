@@ -152,32 +152,110 @@ describe("generatePassphrase — word count bounds", () => {
 describe("generatePassphrase — formatting", () => {
   const wordSet = new Set(EFF_LARGE_WORDLIST);
 
+  /**
+   * Segment `phrase` into exactly `words` wordlist entries joined by `separator`,
+   * returning them with their original casing, or null if it cannot be done.
+   *
+   * Splitting on the separator is NOT a valid way to do this, because the EFF list
+   * contains four hyphenated entries — drop-down, felt-tip, t-shirt, yo-yo — and
+   * "-" is an offered separator. `"t-shirt-abacus".split("-")` yields three pieces,
+   * two of which are not words, so a split-based test failed about 10% of runs
+   * against a perfectly correct generator (#99).
+   *
+   * Matching is done on a lower-cased copy so capitalized phrases segment too;
+   * lower-casing preserves length, so the offsets still index the original.
+   */
+  function segment(
+    phrase: string,
+    separator: string,
+    words: number,
+  ): string[] | null {
+    const lower = phrase.toLowerCase();
+
+    const solve = (from: number, remaining: number): string[] | null => {
+      if (remaining === 1) {
+        return wordSet.has(lower.slice(from)) ? [phrase.slice(from)] : null;
+      }
+
+      for (
+        let at = lower.indexOf(separator, from);
+        at !== -1;
+        at = lower.indexOf(separator, at + 1)
+      ) {
+        if (wordSet.has(lower.slice(from, at))) {
+          const rest = solve(at + separator.length, remaining - 1);
+
+          if (rest !== null) {
+            return [phrase.slice(from, at), ...rest];
+          }
+        }
+      }
+
+      return null;
+    };
+
+    return solve(0, words);
+  }
+
+  it("segments correctly, including hyphenated entries (guards the helper)", () => {
+    expect(wordSet.has("t-shirt")).toBe(true);
+    expect(wordSet.has("yo-yo")).toBe(true);
+
+    // A hyphenated entry inside a hyphen-separated phrase is still one word.
+    expect(segment("t-shirt-abacus-zoom", "-", 3)).toEqual([
+      "t-shirt",
+      "abacus",
+      "zoom",
+    ]);
+    // Capitalized, and with two hyphenated entries. This is the deterministic
+    // cover for #99: it does not depend on a hyphenated word being drawn.
+    expect(segment("T-shirt-Abacus-Zoom-Yo-yo", "-", 4)).toEqual([
+      "T-shirt",
+      "Abacus",
+      "Zoom",
+      "Yo-yo",
+    ]);
+    // And it must not accept just anything.
+    expect(segment("abacus-notaword-zoom", "-", 3)).toBeNull();
+    expect(segment("abacus-zoom", "-", 3)).toBeNull();
+  });
+
   it("joins with the chosen separator and draws every word from the list", () => {
     for (const { value } of PASSPHRASE_SEPARATORS) {
-      const phrase = generatePassphrase({
-        ...BASE,
-        words: 5,
-        separator: value,
-      });
-      const parts = phrase.split(value);
-      expect(parts).toHaveLength(5);
-      for (const part of parts) {
-        expect(wordSet.has(part)).toBe(true);
+      for (let trial = 0; trial < 50; trial++) {
+        const phrase = generatePassphrase({
+          ...BASE,
+          words: 5,
+          separator: value,
+        });
+
+        expect(segment(phrase, value, 5), phrase).not.toBeNull();
       }
     }
   });
 
   it("capitalizes the first letter of every word when asked", () => {
-    for (let trial = 0; trial < 50; trial++) {
-      const phrase = generatePassphrase({
-        ...BASE,
-        words: 4,
-        separator: "-",
-        capitalize: true,
-      });
-      for (const word of phrase.split("-")) {
-        expect(word[0]).toBe(word[0]?.toUpperCase());
-        expect(wordSet.has(word.toLowerCase())).toBe(true);
+    for (const { value } of PASSPHRASE_SEPARATORS) {
+      for (let trial = 0; trial < 50; trial++) {
+        const phrase = generatePassphrase({
+          ...BASE,
+          words: 4,
+          separator: value,
+          capitalize: true,
+        });
+        const drawn = segment(phrase, value, 4);
+
+        expect(drawn, phrase).not.toBeNull();
+
+        for (const word of drawn ?? []) {
+          const entry = word.toLowerCase();
+
+          expect(wordSet.has(entry), phrase).toBe(true);
+          // Pins the contract exactly: capitalizeWord upper-cases charAt(0) and
+          // nothing else, so a hyphenated entry becomes T-shirt, never T-Shirt.
+          // Every list entry is lower-case, so this is the whole transformation.
+          expect(word, phrase).toBe(entry[0]?.toUpperCase() + entry.slice(1));
+        }
       }
     }
   });
@@ -203,8 +281,15 @@ describe("generatePassphrase — formatting", () => {
   it("without a digit, every word is a bare list entry", () => {
     for (let trial = 0; trial < 50; trial++) {
       const phrase = generatePassphrase({ ...BASE, words: 6 });
-      for (const word of phrase.split("-")) {
-        expect(wordSet.has(word)).toBe(true);
+      // Four list entries are hyphenated (drop-down, felt-tip, t-shirt, yo-yo)
+      // and "-" is BASE's separator, so a naive split fragments them. segment
+      // recovers the six drawn entries instead.
+      const drawn = segment(phrase, "-", 6);
+
+      expect(drawn, phrase).not.toBeNull();
+
+      for (const word of drawn ?? []) {
+        expect(wordSet.has(word), phrase).toBe(true);
       }
     }
   });
