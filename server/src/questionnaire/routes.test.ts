@@ -1,6 +1,6 @@
 import { QUESTIONNAIRE_VERSION, QUESTIONS } from "@soteria/shared";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../app.js";
 import { SESSION_COOKIE } from "../auth/cookie.js";
@@ -42,7 +42,15 @@ function fakeStore(): QuestionnaireStore & { seen: string[] } {
 }
 
 function testApp(
-  overrides: { user?: UserRecord | undefined; store?: QuestionnaireStore } = {},
+  overrides: {
+    user?: UserRecord | undefined;
+    store?: QuestionnaireStore;
+    recordSnapshot?: (
+      userId: string,
+      submissionId: string | null,
+      scores: unknown,
+    ) => Promise<number>;
+  } = {},
 ) {
   const user = "user" in overrides ? overrides.user : USER;
   return createApp({
@@ -60,7 +68,14 @@ function testApp(
       bumpVersion: async () => 1,
       audit: async () => {},
     },
-    questionnaireRouterOptions: { store: overrides.store ?? fakeStore() },
+    questionnaireRouterOptions: {
+      store: overrides.store ?? fakeStore(),
+      ...(overrides.recordSnapshot === undefined
+        ? { recordSnapshot: async () => 0 }
+        : {
+            recordSnapshot: overrides.recordSnapshot as never,
+          }),
+    },
   });
 }
 
@@ -217,5 +232,73 @@ describe("PUT /api/questionnaire", () => {
       .set("Cookie", await cookie())
       .send({ answers: {}, extra: true })
       .expect(400);
+  });
+});
+
+describe("PUT /api/questionnaire — the US-17 scoring seam", () => {
+  it("writes a score snapshot for the saved submission", async () => {
+    const recordSnapshot = vi.fn(async () => 5);
+
+    await request(testApp({ recordSnapshot }))
+      .put("/api/questionnaire")
+      .set("Cookie", await cookie())
+      .send({ answers: { [pw.id]: pw.options[0]!.id } })
+      .expect(200);
+
+    expect(recordSnapshot).toHaveBeenCalledTimes(1);
+
+    const call = recordSnapshot.mock.calls[0] as unknown as [
+      string,
+      string | null,
+      { categories: unknown[]; overall: number | null },
+    ];
+    const [userId, submissionId, scores] = call;
+
+    expect(userId).toBe(USER.id);
+    expect(submissionId).toBeTruthy();
+    // Scored from the answers just saved, not from an empty set.
+    expect(scores.categories).toHaveLength(5);
+    expect(scores.overall).not.toBeNull();
+  });
+
+  it("still saves the answers when the snapshot write fails", async () => {
+    // The answers are the source of truth and are already committed by this
+    // point. Losing a history point is a smaller harm than telling a user their
+    // answers did not save when they did — and the next save writes one anyway.
+    const recordSnapshot = vi.fn(async () => {
+      throw new Error("score_snapshots insert failed");
+    });
+
+    const response = await request(testApp({ recordSnapshot }))
+      .put("/api/questionnaire")
+      .set("Cookie", await cookie())
+      .send({ answers: { [pw.id]: pw.options[0]!.id } })
+      .expect(200);
+
+    expect(recordSnapshot).toHaveBeenCalledTimes(1);
+    expect(response.body.answers[pw.id]).toBe(pw.options[0]!.id);
+  });
+
+  it("does not write a snapshot when the save is rejected", async () => {
+    const recordSnapshot = vi.fn(async () => 5);
+
+    await request(testApp({ recordSnapshot }))
+      .put("/api/questionnaire")
+      .set("Cookie", await cookie())
+      .send({ answers: { [pw.id]: "not-an-offered-option" } })
+      .expect(400);
+
+    expect(recordSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("does not write a snapshot for an anonymous caller", async () => {
+    const recordSnapshot = vi.fn(async () => 5);
+
+    await request(testApp({ recordSnapshot }))
+      .put("/api/questionnaire")
+      .send({ answers: { [pw.id]: pw.options[0]!.id } })
+      .expect(401);
+
+    expect(recordSnapshot).not.toHaveBeenCalled();
   });
 });

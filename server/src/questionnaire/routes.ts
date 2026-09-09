@@ -1,4 +1,5 @@
 import {
+  computeScores,
   QUESTIONNAIRE_VERSION,
   QUESTIONS,
   validateAnswers,
@@ -10,6 +11,8 @@ import { z } from "zod";
 import { ApiError } from "../http/errors.js";
 import { validate, validated } from "../http/validate.js";
 import { requireSession, sessionOf } from "../auth/middleware.js";
+import { logger, serializeError } from "../logging/logger.js";
+import { writeScoreSnapshots } from "../scoring/snapshots.js";
 import { createQuestionnaireStore, type QuestionnaireStore } from "./store.js";
 
 /**
@@ -45,6 +48,8 @@ const putBody = z
 export interface QuestionnaireRouterOptions {
   /** Overridable so route tests need no database. */
   store?: QuestionnaireStore;
+  /** Overridable so route tests need no database. */
+  recordSnapshot?: typeof writeScoreSnapshots;
 }
 
 function toState(
@@ -65,6 +70,7 @@ export function questionnaireRouter(
   options: QuestionnaireRouterOptions = {},
 ): Router {
   const store = options.store ?? createQuestionnaireStore();
+  const recordSnapshot = options.recordSnapshot ?? writeScoreSnapshots;
   const router = Router();
 
   router.get(
@@ -112,13 +118,30 @@ export function questionnaireRouter(
 
       store
         .save(session.user.id, answers, QUESTIONNAIRE_VERSION)
-        .then((submission) => {
-          // ── SCORING SEAM (US-17) ──────────────────────────────────────────
-          // US-17 wires scoring here: compute category scores from
-          // `submission.answers` via the engine in `@soteria/shared` and insert
-          // a `score_snapshots` row (US-19). Intentionally not called in US-16 —
-          // this route produces no score and no snapshot.
+        .then(async (submission) => {
+          // ── SCORING SEAM (US-17), now wired ───────────────────────────────
+          // A snapshot is written on every save so US-19's trend has points to
+          // draw. It is history, not a cache: GET /api/scores recomputes from
+          // the answers, so a rules change takes effect immediately rather than
+          // leaving users looking at numbers from rules that no longer exist.
+          //
+          // A snapshot failure must not fail the save. The answers are the
+          // source of truth and are already committed at this point; losing a
+          // history point is a smaller harm than telling a user their answers
+          // did not save when they did, and the next save writes one anyway.
           // ─────────────────────────────────────────────────────────────────
+          try {
+            await recordSnapshot(
+              session.user.id,
+              submission.submissionId,
+              computeScores({ answers: submission.answers }),
+            );
+          } catch (error) {
+            logger.error(
+              { err: serializeError(error), userId: undefined },
+              "Failed to write score_snapshots after a questionnaire save",
+            );
+          }
 
           response.json(toState(submission));
         })

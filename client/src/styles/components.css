@@ -557,3 +557,61 @@
     width: var(--touch-target);
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Posture scores (US-17). Tokens only: stylelint fails the build on a literal
+ * colour, font, radius or shadow outside tokens.css.
+ * ------------------------------------------------------------------------- */
+
+.scores {
+  max-width: 60rem;
+}
+
+.scores__overall {
+  margin: 0 0 var(--space-2);
+}
+
+.scores__overall-value {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-5);
+  font-weight: var(--weight-heading-strong);
+  color: var(--color-primary-strong);
+}
+
+.scores__overall-of {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-1);
+}
+
+.scores__lede,
+.scores__note,
+.scores__asof {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-1);
+  line-height: var(--line-body);
+}
+
+.scores__note {
+  /* Full-strength text, not muted: axe measured muted-on-alt-surface at 4.35 in
+     the dark theme against a 4.5 AA threshold, and a disclosure that a score is
+     provisional is not a detail to de-emphasise into illegibility. */
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.scores__error {
+  margin: 0 0 var(--space-3);
+  color: var(--color-severity-high);
+  font-size: var(--font-size-1);
+}
+
+.scores__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}

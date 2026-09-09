@@ -11,6 +11,7 @@ const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 const SignIn = lazy(() => import("./routes/SignIn"));
 const Questionnaire = lazy(() => import("./routes/Questionnaire"));
 const Settings = lazy(() => import("./routes/Settings"));
+const Scores = lazy(() => import("./routes/Scores"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -39,6 +40,14 @@ export function App() {
             element={
               <RequireSession>
                 <Questionnaire />
+              </RequireSession>
+            }
+          />
+          <Route
+            path="/scores"
+            element={
+              <RequireSession>
+                <Scores />
               </RequireSession>
             }
           />
