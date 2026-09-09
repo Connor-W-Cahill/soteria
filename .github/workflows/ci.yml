@@ -19,6 +19,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npm run playwright -w @soteria/client
 
   db:
     name: db-migrations
