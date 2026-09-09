@@ -9,6 +9,7 @@ const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
 const PasswordTools = lazy(() => import("./routes/PasswordTools"));
 const PasswordPrivacy = lazy(() => import("./routes/PasswordPrivacy"));
 const SignIn = lazy(() => import("./routes/SignIn"));
+const Settings = lazy(() => import("./routes/Settings"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -32,6 +33,14 @@ export function App() {
           <Route path="/password-tools" element={<PasswordTools />} />
           <Route path="/learn/password-privacy" element={<PasswordPrivacy />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route
+            path="/settings"
+            element={
+              <RequireSession>
+                <Settings />
+              </RequireSession>
+            }
+          />
           {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
             (item) => (
               <Route

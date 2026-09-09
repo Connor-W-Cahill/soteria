@@ -79,6 +79,14 @@ function AccountMenu({
       {open ? (
         <div className="app__account-menu" role="menu">
           <p className="app__account-name">{label}</p>
+          <NavLink
+            to="/settings"
+            role="menuitem"
+            className="app__account-action"
+            onClick={() => setOpen(false)}
+          >
+            Settings
+          </NavLink>
           <button
             type="button"
             role="menuitem"
