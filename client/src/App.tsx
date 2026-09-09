@@ -4,6 +4,7 @@ import { AppShell, NAV_ITEMS } from "./components/AppShell";
 import { EmptyState } from "./components";
 
 const DevKit = import.meta.env.DEV ? lazy(() => import("./dev/DevKit")) : null;
+const PasswordTools = lazy(() => import("./routes/PasswordTools"));
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -20,13 +21,16 @@ export function App() {
       <Suspense fallback={<p>Loading…</p>}>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          {NAV_ITEMS.map((item) => (
-            <Route
-              key={item.to}
-              path={item.to}
-              element={<Placeholder title={item.label} />}
-            />
-          ))}
+          <Route path="/password-tools" element={<PasswordTools />} />
+          {NAV_ITEMS.filter((item) => item.to !== "/password-tools").map(
+            (item) => (
+              <Route
+                key={item.to}
+                path={item.to}
+                element={<Placeholder title={item.label} />}
+              />
+            ),
+          )}
           {DevKit ? <Route path="/dev/kit" element={<DevKit />} /> : null}
           <Route path="*" element={<Placeholder title="This page" />} />
         </Routes>
