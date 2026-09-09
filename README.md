@@ -42,6 +42,37 @@ the `mssql` driver. `DATABASE_URL` carries the connection (see `.env.example`).
 The schema, its privacy invariants, and the ERD are documented in
 [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
+## Architecture
+
+The course architecture and component-design artifacts live in
+[`docs/architecture/`](docs/architecture/):
+
+- [`overview.md`](docs/architecture/overview.md) — system context, container, and
+  deployment diagrams, and the list of key decisions (Milestone 3).
+- [`components.md`](docs/architecture/components.md) — component design of the
+  scoring engine, CVE matcher, recommendation engine, and alert generator, with
+  TypeScript interfaces and Mermaid sequence diagrams (Milestone 4).
+- [`classes.md`](docs/architecture/classes.md) — the user-story nouns mapped to
+  tables and modules, classified for CRC cards.
+- [`adr/`](docs/architecture/adr/README.md) — one architecture decision record
+  per fixed choice from the implementation plan.
+
+## Deployment
+
+Azure Static Web Apps (client), Azure App Service on Linux/Node 22 (API), and
+Azure SQL Database, provisioned by [`infra/main.bicep`](infra/main.bicep) via
+[`infra/deploy.sh`](infra/deploy.sh) and deployed by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) after CI passes
+on `main`. The walkthrough, the GitHub secrets, and the production security
+posture are in [`docs/deploy.md`](docs/deploy.md).
+
+## API conventions
+
+The error envelope, request validation, log redaction, correlation ids, rate
+limiting, and the audit log are documented in
+[`docs/architecture/conventions.md`](docs/architecture/conventions.md). Every
+route added from Phase 2 on uses them.
+
 ## Checks
 
 - `npm run lint` checks ESLint and Prettier.
