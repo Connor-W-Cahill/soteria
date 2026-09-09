@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import type { SessionUser } from "@soteria/shared";
+import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { IconButton } from "./IconButton";
-import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
 import { SkipLink } from "./SkipLink";
 import { useSession, type SessionStatus } from "../session";
@@ -50,12 +50,58 @@ function NavIcon() {
   );
 }
 
+/** Band-1 account control: the signed-in user's initial, name and sign-out. */
+function AccountMenu({
+  user,
+  onSignOut,
+}: {
+  user: SessionUser | null;
+  onSignOut: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = user?.displayName ?? user?.email ?? "Account";
+  const initial = (label.trim()[0] ?? "?").toUpperCase();
+
+  return (
+    <div className="app__account">
+      <button
+        type="button"
+        className="app__avatar"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="app__avatar-initial" aria-hidden="true">
+          {initial}
+        </span>
+        <span className="sr-only">{`Account menu for ${label}`}</span>
+      </button>
+      {open ? (
+        <div className="app__account-menu" role="menu">
+          <p className="app__account-name">{label}</p>
+          <button
+            type="button"
+            role="menuitem"
+            className="app__account-action"
+            onClick={() => {
+              setOpen(false);
+              void onSignOut();
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export interface AppShellProps {
   children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { status } = useSession();
+  const { status, user, loading, signOut } = useSession();
   const navItems = navItemsFor(status);
   const signedIn = status === "authenticated";
 
@@ -84,8 +130,15 @@ export function AppShell({ children }: AppShellProps) {
             </IconButton>
           ) : null}
           <ThemeToggle />
-          {signedIn ? null : (
-            <Button variant="secondary">Sign in with Google</Button>
+          {loading ? null : signedIn ? (
+            <AccountMenu user={user} onSignOut={signOut} />
+          ) : (
+            /* A link, not a button: /signin is a page, and the Google script is
+               only ever loaded there (US-15 — the anonymous tool pages contact
+               no Google origin, ADR-0013). */
+            <NavLink to="/signin" className="app__signin">
+              Sign in with Google
+            </NavLink>
           )}
         </div>
       </header>

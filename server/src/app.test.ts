@@ -2,11 +2,13 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "./app.js";
+import { TEST_AUTH_CONFIG } from "./auth/testing.js";
 
 function testApp(dbConnected: boolean) {
   return createApp({
     checkDbConnection: async () => dbConnected,
     enableRateLimit: false,
+    auth: TEST_AUTH_CONFIG,
   });
 }
 

@@ -2,6 +2,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "../app.js";
+import { TEST_AUTH_CONFIG } from "../auth/testing.js";
 import { allowedOrigins, corsOptions } from "./security.js";
 
 const SWA = "https://soteria-web-abc123.azurestaticapps.net";
@@ -10,6 +11,7 @@ function testApp() {
   return createApp({
     checkDbConnection: async () => true,
     enableRateLimit: false,
+    auth: TEST_AUTH_CONFIG,
   });
 }
 

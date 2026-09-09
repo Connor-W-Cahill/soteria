@@ -18,6 +18,13 @@
  * `PROD` is the single source of truth for the deployed policy: it is served by
  * `vite preview` and asserted byte-for-byte against
  * `public/staticwebapp.config.json` in `csp.test.ts`.
+ *
+ * The `accounts.google.com` entries below are Google Identity Services (US-14),
+ * and they are why the "only HIBP" sentence above needs qualifying: see
+ * ADR-0008. In short, `connect-src` gains an origin that a script *may* reach,
+ * but nothing password-derived is ever sent to it, and the GIS script is loaded
+ * only by `/signin` — never by the anonymous password tools, which is asserted
+ * by US-15's anonymity tests rather than merely intended.
  */
 
 /** Directives common to both policies, in a fixed order. */
@@ -29,8 +36,17 @@ const COMMON = {
   "form-action": ["'none'"],
   "img-src": ["'self'", "data:"],
   "font-src": ["'self'", "https://fonts.gstatic.com"],
-  // The one directive that enforces ADR-0007. Identical dev and prod.
-  "connect-src": ["'self'", "https://api.pwnedpasswords.com"],
+  // The directive that enforces ADR-0007. Identical dev and prod.
+  // HIBP is the only origin that ever receives password-derived data (a
+  // 5-character SHA-1 prefix). accounts.google.com is reachable for sign-in
+  // only, and only from /signin — ADR-0008.
+  "connect-src": [
+    "'self'",
+    "https://api.pwnedpasswords.com",
+    "https://accounts.google.com",
+  ],
+  // The GIS credential iframe. 'none' would break sign-in outright.
+  "frame-src": ["https://accounts.google.com"],
 };
 
 function serialise(directives) {
@@ -41,16 +57,27 @@ function serialise(directives) {
 
 export const PROD_CSP = serialise({
   ...COMMON,
-  "script-src": ["'self'"],
-  "style-src": ["'self'", "https://fonts.googleapis.com"],
+  "script-src": ["'self'", "https://accounts.google.com"],
+  // GIS also loads its own stylesheet from accounts.google.com/gsi/style; the
+  // e2e CSP test caught this, since the button renders unstyled without it.
+  "style-src": [
+    "'self'",
+    "https://fonts.googleapis.com",
+    "https://accounts.google.com",
+  ],
 });
 
 export const DEV_CSP = serialise({
   ...COMMON,
   // Vite injects the React refresh preamble as an inline script and CSS as
   // inline <style> in dev; neither exists in the production build.
-  "script-src": ["'self'", "'unsafe-inline'"],
-  "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  "script-src": ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+  "style-src": [
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+    "https://accounts.google.com",
+  ],
   // The HMR websocket. Any localhost port, because each worktree's dev server
   // runs on its own (playwright.config.ts).
   "connect-src": [
