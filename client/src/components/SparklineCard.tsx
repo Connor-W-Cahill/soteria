@@ -1,9 +1,17 @@
+import type { ReactNode } from "react";
+
 export interface SparklineCardProps {
   name: string;
   value: number | string;
   why: string;
   /** Historical snapshot values, oldest first. */
   history: number[];
+  /**
+   * Optional extra content rendered inside the card below the sparkline — used
+   * by `/scores` (US-18) to hang a disclosure of the score's contributions off
+   * each card.
+   */
+  children?: ReactNode;
 }
 
 /** 60x20 sparkline. Line in primary, final point highlighted in accent. */
@@ -51,6 +59,7 @@ export function SparklineCard({
   value,
   why,
   history,
+  children,
 }: SparklineCardProps) {
   return (
     <div className="sot-spark">
@@ -58,6 +67,7 @@ export function SparklineCard({
       <span className="sot-spark__name">{name}</span>
       <span className="sot-spark__why">{why}</span>
       <Sparkline history={history} />
+      {children}
     </div>
   );
 }
