@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "playwright": "playwright test",
-    "tokens:gen": "node scripts/generate-tokens.mjs"
+    "tokens:gen": "node scripts/generate-tokens.mjs",
+    "csp:gen": "node scripts/gen-swa-config.mjs"
   },
   "dependencies": {
     "@soteria/shared": "0.1.0",
