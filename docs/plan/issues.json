@@ -1,0 +1,347 @@
+{
+  "repo": { "name": "soteria", "owner": "Connor-W-Cahill", "visibility": "private", "default_branch": "main" },
+  "labels": [
+    { "name": "type:epic", "color": "5319E7", "description": "Groups a set of stories" },
+    { "name": "type:story", "color": "0E8A16", "description": "User story from the backlog" },
+    { "name": "type:infra", "color": "1D76DB", "description": "Repo, CI, Azure, tooling" },
+    { "name": "type:chore", "color": "C5DEF5", "description": "Maintenance, docs, cleanup" },
+    { "name": "type:bug", "color": "D73A4A", "description": "Defect" },
+    { "name": "area:design-system", "color": "FBCA04", "description": "Seeded tokens, shell, shared components" },
+    { "name": "area:password-tools", "color": "FBCA04", "description": "Breach check, generators, explanations" },
+    { "name": "area:auth", "color": "FBCA04", "description": "Google sign-in, sessions, account deletion" },
+    { "name": "area:questionnaire", "color": "FBCA04", "description": "Posture questionnaire and scoring" },
+    { "name": "area:coach", "color": "FBCA04", "description": "Password manager coach and breach awareness" },
+    { "name": "area:software-cve", "color": "FBCA04", "description": "Software profile, NVD, matching" },
+    { "name": "area:recommendations", "color": "FBCA04", "description": "Recommendation engine and lifecycle" },
+    { "name": "area:alerts", "color": "FBCA04", "description": "In-app alerts, freshness, digests" },
+    { "name": "area:dashboard", "color": "FBCA04", "description": "Dashboard, filters" },
+    { "name": "area:a11y", "color": "FBCA04", "description": "Keyboard and mobile accessibility" },
+    { "name": "area:devops", "color": "FBCA04", "description": "CI/CD and Azure" },
+    { "name": "priority:baseline", "color": "B60205", "description": "Required for the semester baseline" },
+    { "name": "priority:stretch", "color": "E4E669", "description": "Only after baseline is stable" },
+    { "name": "agent:sol", "color": "BFD4F2", "description": "Codex 5.6 Sol lead owns this" },
+    { "name": "agent:terra", "color": "BFD4F2", "description": "Codex 5.6 Terra worker" },
+    { "name": "agent:luna", "color": "BFD4F2", "description": "Codex 5.6 Luna worker" },
+    { "name": "agent:opus", "color": "BFD4F2", "description": "Claude Opus: hard implementation or review" },
+    { "name": "review:security", "color": "000000", "description": "Requires Opus security review before merge" },
+    { "name": "ai-assisted", "color": "EDEDED", "description": "AI-assisted work; disclosure required per charter" },
+    { "name": "needs-human-review", "color": "F9D0C4", "description": "Awaiting second-person review per charter" }
+  ],
+  "milestones": [
+    { "title": "Sprint 0: Foundation", "due_on": "2026-10-11", "description": "Repo, CI, seeded design system, thin Azure deployment, data model. Feeds course Milestones 3 and 4." },
+    { "title": "Sprint 1", "due_on": "2026-10-25", "description": "Anonymous password tools, Google sign-in, questionnaire and category scores. Course Presentation 1 (week 9)." },
+    { "title": "Sprint 2", "due_on": "2026-11-08", "description": "Coach, breach awareness, software profile, CVE matching, freshness. Course Presentation 2 (week 11)." },
+    { "title": "Sprint 3", "due_on": "2026-11-22", "description": "Recommendations lifecycle, alerts, dashboard, filters. Course Milestone 5 code review (week 12) and Presentation 3 (week 13)." },
+    { "title": "Sprint 4", "due_on": "2026-12-13", "description": "Accessibility, mobile, testing report, stretch items. Course Milestone 6 testing report (week 16)." }
+  ],
+  "epics": [
+    { "key": "EPIC-0", "title": "Epic: Foundation and delivery pipeline", "labels": ["type:epic","area:devops","priority:baseline"], "milestone": "Sprint 0: Foundation", "children": ["INF-01","INF-02","INF-03","INF-04","INF-05","INF-06","INF-07","INF-08"] },
+    { "key": "EPIC-1", "title": "Epic: Password checking and generation", "labels": ["type:epic","area:password-tools","priority:baseline"], "milestone": "Sprint 1", "children": ["US-01","US-02","US-03","US-04","US-05","US-15"] },
+    { "key": "EPIC-4", "title": "Epic: Accounts and saved posture", "labels": ["type:epic","area:auth","area:questionnaire","priority:baseline"], "milestone": "Sprint 1", "children": ["US-14","US-20","US-16","US-17","US-18","US-19"] },
+    { "key": "EPIC-2", "title": "Epic: Password manager coach", "labels": ["type:epic","area:coach","priority:baseline"], "milestone": "Sprint 2", "children": ["US-06","US-07","US-08","US-09","US-10"] },
+    { "key": "EPIC-3", "title": "Epic: Breach awareness", "labels": ["type:epic","area:coach","priority:baseline"], "milestone": "Sprint 2", "children": ["US-11","US-12","US-13"] },
+    { "key": "EPIC-5", "title": "Epic: Software profiles and CVE matching", "labels": ["type:epic","area:software-cve","priority:baseline"], "milestone": "Sprint 2", "children": ["US-21","US-22","US-23","US-24","US-25","US-26","US-34"] },
+    { "key": "EPIC-6", "title": "Epic: Recommendations and resolution", "labels": ["type:epic","area:recommendations","priority:baseline"], "milestone": "Sprint 3", "children": ["US-27","US-28","US-29","US-30"] },
+    { "key": "EPIC-7", "title": "Epic: Alerts and dashboard", "labels": ["type:epic","area:alerts","area:dashboard","priority:baseline"], "milestone": "Sprint 3", "children": ["US-31","US-35","US-36"] },
+    { "key": "EPIC-8", "title": "Epic: Accessibility, mobile, and testing report", "labels": ["type:epic","area:a11y","priority:baseline"], "milestone": "Sprint 4", "children": ["US-37","US-38","INF-09","INF-10"] },
+    { "key": "EPIC-9", "title": "Epic: Email digests (stretch)", "labels": ["type:epic","area:alerts","priority:stretch"], "milestone": "Sprint 4", "children": ["US-32","US-33"] }
+  ],
+  "issues": [
+    {
+      "key": "INF-01", "title": "Bootstrap GitHub repository, labels, milestones, templates",
+      "labels": ["type:infra","area:devops","priority:baseline","agent:sol"], "milestone": "Sprint 0: Foundation", "phase": 0,
+      "body": "Create the `soteria` repository through the GitHub MCP (fallback: `gh repo create`). Initialize git in `/home/connor/Work/CS330/soteria`, commit the plan docs, push `main`.\n\n**Acceptance**\n- [ ] Repo exists, private, `main` protected: require PR, 1 approving review, status checks, no force push.\n- [ ] All labels and milestones from `docs/plan/issues.json` created.\n- [ ] `.github/ISSUE_TEMPLATE/story.yml`, `bug.yml`; `.github/pull_request_template.md` with an **AI assistance** section (tool, what it influenced, verification performed) per charter section 6.\n- [ ] `CODEOWNERS` naming the human team; `CONTRIBUTING.md` describing branch-per-issue (`feat/US-01-breach-check`), commit trailer `AI-Assisted: Codex|Claude`, squash merge.\n- [ ] Every epic and story in `issues.json` created as an issue, epics link children, stories link `Part of #<epic>`.\n- [ ] GitHub Project (board) with columns Backlog / Ready / In progress / In review / Done, auto-add on issue open.",
+      "depends_on": []
+    },
+    {
+      "key": "INF-02", "title": "Monorepo scaffold: client, server, shared, lint, test, CI",
+      "labels": ["type:infra","area:devops","priority:baseline","agent:sol"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "npm workspaces: `client/` (React 18, Vite, TypeScript strict, React Router, TanStack Query), `server/` (Node 22 LTS, Express 5, TypeScript, zod, pino), `shared/` (types and pure rule modules used by both).\n\n**Acceptance**\n- [ ] `npm run lint`, `npm run typecheck`, `npm test` pass at root; ESLint + Prettier configured; `engines.node >= 22`.\n- [ ] Vitest for unit tests in all three packages; Supertest wired in server; Playwright installed in client (no tests yet).\n- [ ] `.github/workflows/ci.yml` runs lint, typecheck, unit tests on every PR; required status check on `main`.\n- [ ] `GET /api/health` returns `{ status, version, dbConnected }`.\n- [ ] `README.md` with local setup (`.env.example` documented, `npm run dev` starts both).",
+      "depends_on": ["INF-01"]
+    },
+    {
+      "key": "INF-03", "title": "Seeded design system: tokens, fonts, app shell, base components",
+      "labels": ["type:infra","area:design-system","priority:baseline","agent:terra"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "Implement `docs/design/DESIGN_SEED.md` exactly. Seed 3080478562.\n\n**Acceptance**\n- [ ] `client/src/styles/tokens.css` generated from `docs/design/derive-seed.mjs`; light and dark values.\n- [ ] Google Fonts Sora / Nunito Sans / Red Hat Mono loaded with fallbacks.\n- [ ] Split-header shell: band 1 (wordmark, bell, theme toggle, sign-in), band 2 (underlined nav tabs); bottom tab bar below 768px.\n- [ ] Base components: Button, Input, Select, Checkbox, Card (flat-bordered), Badge, SeverityBadge (label + color), Tabs, Dialog, Toast, EmptyState (geometric SVG), SparklineCard, SkipLink.\n- [ ] Storybook-free demo route `/dev/kit` (dev only) showing every component; footer shows `design seed 3080478562`.\n- [ ] Stylelint or ESLint rule fails CI on literal hex/rgb/oklch colors outside `tokens.css`.\n- [ ] axe (`@axe-core/playwright`) smoke test on `/dev/kit` passes with zero violations.",
+      "depends_on": ["INF-02"]
+    },
+    {
+      "key": "INF-04", "title": "Data model and migrations (Azure SQL via Knex + mssql)",
+      "labels": ["type:infra","area:devops","priority:baseline","agent:sol"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "Knex migrations in `server/src/db/migrations`. Local dev uses SQL Server in Docker (`mcr.microsoft.com/mssql/server:2022-latest`) via `docker-compose.yml`; production uses Azure SQL.\n\n**Tables (initial)**: `users`, `questionnaire_responses`, `score_snapshots`, `coach_progress`, `products` (catalog), `user_software`, `cve_cache`, `cve_matches`, `recommendations`, `alerts`, `notification_settings`, `audit_log`.\n\n**Acceptance**\n- [ ] `npm run db:migrate` / `db:rollback` / `db:seed` work locally and against Azure SQL via `DATABASE_URL`.\n- [ ] Seed loads `shared/catalog/products.json` into `products`.\n- [ ] `docs/architecture/data-model.md` with an ERD (Mermaid) and column-level notes; **no column ever stores a password, hash, or generated credential** (documented and enforced by review checklist).\n- [ ] Integration test spins up the Docker DB in CI (service container) and runs migrations.",
+      "depends_on": ["INF-02"]
+    },
+    {
+      "key": "INF-05", "title": "Thin end-to-end Azure deployment",
+      "labels": ["type:infra","area:devops","priority:baseline","agent:sol"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "Deploy the health endpoint and empty shell before any feature work (charter risk: Azure learning curve).\n\n**Targets**: Azure Static Web Apps (Free) for `client/`; Azure App Service (Linux, Node 22, F1 or B1) for `server/`; Azure SQL Database free offer.\n\n**Acceptance**\n- [ ] `infra/` contains Bicep (or `az` CLI script) that provisions all three plus App Service settings; `docs/deploy.md` walks a teammate through it with the student subscription.\n- [ ] `.github/workflows/deploy.yml` deploys client and server on push to `main` after CI passes; secrets documented (never committed).\n- [ ] Production URL serves the shell; `/api/health` reports `dbConnected: true`.\n- [ ] CORS locked to the SWA origin; HSTS on; `helmet` defaults on.",
+      "depends_on": ["INF-02","INF-04"]
+    },
+    {
+      "key": "INF-06", "title": "Architecture and component design docs (course Milestones 3 and 4)",
+      "labels": ["type:chore","area:devops","priority:baseline","agent:luna"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "Turn the plan into the course artifacts.\n\n**Acceptance**\n- [ ] `docs/architecture/overview.md`: context diagram, container diagram (React SPA, Node API, Azure SQL, HIBP, NVD, Google Identity), deployment diagram, key decisions as ADRs (`docs/architecture/adr/`).\n- [ ] `docs/architecture/components.md`: component-level design of scoring engine, CVE matcher, recommendation engine, alert generator, with interfaces and sequence diagrams (Mermaid).\n- [ ] Class list extracted from the user stories (nouns) mapped to tables/modules, suitable for CRC cards.",
+      "depends_on": ["INF-04"]
+    },
+    {
+      "key": "INF-07", "title": "Product catalog with CPE identifiers and version-lookup instructions",
+      "labels": ["type:chore","area:software-cve","priority:baseline","agent:luna"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "Curate `shared/catalog/products.json`: 18 to 24 products across OS, browser, desktop app. Each entry: `id`, `name`, `vendor`, `category`, `cpeVendor`, `cpeProduct`, `versionScheme` (semver | build | marketing), `versionHelp` (step-by-step text and platform), `vendorAdvisoryUrl`.\n\n**Suggested set**: Windows 10, Windows 11, macOS, Ubuntu; Chrome, Firefox, Edge, Safari; Zoom, Slack, Discord, VLC, 7-Zip, Adobe Acrobat Reader, Notepad++, Spotify, Steam, Microsoft Office, iTunes, WinRAR, OBS Studio, Java (JRE).\n\n**Acceptance**\n- [ ] Every CPE string verified against the NVD CPE dictionary search (record the query used in the PR).\n- [ ] Version help written for nontechnical users, one product per test snapshot.\n- [ ] JSON schema in `shared/catalog/products.schema.json`; test validates the file.",
+      "depends_on": ["INF-02"]
+    },
+    {
+      "key": "INF-08", "title": "Shared conventions: error envelope, request validation, logging redaction, audit log",
+      "labels": ["type:infra","area:devops","priority:baseline","review:security","agent:sol"], "milestone": "Sprint 0: Foundation", "phase": 1,
+      "body": "**Acceptance**\n- [ ] All API errors use `{ error: { code, message, details? } }`; zod validates every request body/query; 404/400/401/403/500 handled centrally.\n- [ ] pino logger with a redaction list that drops any field named like `password|passphrase|secret|token|authorization|hash`; a unit test proves a request body containing `password` never appears in logs.\n- [ ] `audit_log` records auth events, deletions, dismissals, and refresh jobs (user id, action, timestamp; no payloads).\n- [ ] Rate limiting (`express-rate-limit`) on public endpoints.",
+      "depends_on": ["INF-02","INF-04"]
+    },
+
+    {
+      "key": "US-01", "title": "US-01 Private breach check (HIBP k-anonymity)",
+      "labels": ["type:story","area:password-tools","priority:baseline","review:security","agent:sol"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a user concerned about password security, I want to check whether a password has appeared in known breach data without the application storing or receiving it, so that I can replace compromised credentials without exposing them further.\n\n**Design**: entirely client-side. SHA-1 via Web Crypto, send first 5 hex chars to `https://api.pwnedpasswords.com/range/{prefix}` with `Add-Padding: true`, compare suffixes locally. The Soteria server is never involved.\n\n**Acceptance**\n- [ ] Password input never leaves the browser: a Playwright test intercepts all network requests during a check and asserts the only request is the range call and that no request body or URL contains the password or full hash.\n- [ ] Result shows breach count or \"not found\"; handles HIBP failure with a clear non-blocking error.\n- [ ] Input is `type=password` with a show/hide toggle; no autocomplete; value cleared on navigation.\n- [ ] Unit tests for prefix/suffix split and suffix matching, including padded lines (`:0`).",
+      "depends_on": ["INF-03"]
+    },
+    {
+      "key": "US-02", "title": "US-02 Random password generator (browser-only)",
+      "labels": ["type:story","area:password-tools","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a user creating a new account, I want to generate a strong random password in my browser, so that I can protect the account without inventing a predictable password myself.\n\n**Acceptance**\n- [ ] Uses `crypto.getRandomValues` with rejection sampling (no modulo bias); length 8–64, toggles for upper/lower/digits/symbols, \"avoid ambiguous characters\".\n- [ ] Copy button with confirmation toast; generated value is never sent anywhere and never persisted (no localStorage).\n- [ ] Generator lives in `shared/password/generate.ts` with unit tests for character-class guarantees and distribution sanity.",
+      "depends_on": ["INF-03"]
+    },
+    {
+      "key": "US-03", "title": "US-03 Passphrase generator (EFF wordlist)",
+      "labels": ["type:story","area:password-tools","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a user who needs to memorize a password, I want to generate a long multi-word passphrase, so that I can use a credential that is both memorable and difficult to guess.\n\n**Acceptance**\n- [ ] EFF large wordlist (7,776 words) bundled in `shared/password/eff-large.json` with its license note; 3–8 words; separator choice; optional capitalization and digit.\n- [ ] Entropy shown in bits (log2(7776) per word) with a one-sentence explanation.\n- [ ] Same privacy guarantees as US-02.",
+      "depends_on": ["US-02"]
+    },
+    {
+      "key": "US-04", "title": "US-04 Explain password results (strength vs breach status)",
+      "labels": ["type:story","area:password-tools","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a user evaluating a password, I want to see separate explanations of its estimated strength and known-breach status, so that I understand why a password may need to be changed.\n\n**Acceptance**\n- [ ] Strength via `@zxcvbn-ts/core` running locally; show score 0–4, crack-time estimate, and the library's warning/suggestions in plain language.\n- [ ] Two visually separate result cards: \"Strength (estimated locally)\" and \"Breach status (from Have I Been Pwned)\"; a strong but breached password is clearly flagged as unsafe.\n- [ ] Copy text reviewed for a nontechnical reader; no jargon without a tooltip.",
+      "depends_on": ["US-01"]
+    },
+    {
+      "key": "US-05", "title": "US-05 Explain password privacy",
+      "labels": ["type:story","area:password-tools","priority:baseline","agent:luna"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a privacy-conscious user, I want a clear explanation of how password checks are performed locally and what data is sent to the breach service, so that I can decide whether I trust the tool before entering a password.\n\n**Acceptance**\n- [ ] `/learn/password-privacy` page and an inline \"How this works\" disclosure above the checker: describes SHA-1, the 5-character prefix, padding, and what HIBP can and cannot learn; links HIBP's API docs.\n- [ ] States explicitly that Soteria's server never receives the password and that nothing is stored.\n- [ ] Reading level checked (aim for grade 8–10).",
+      "depends_on": ["US-01"]
+    },
+    {
+      "key": "US-15", "title": "US-15 Use password tools anonymously",
+      "labels": ["type:story","area:password-tools","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 2,
+      "body": "As a first-time visitor, I want to use the password checker and generator without creating an account, so that I can evaluate the tools before sharing my identity.\n\n**Acceptance**\n- [ ] `/tools` routes render without a session; no auth prompt, no cookies set, no analytics.\n- [ ] Signed-out nav hides account-only tabs but keeps Password Tools and Learn.\n- [ ] Playwright test: fresh context, run checker and both generators, assert zero `Set-Cookie` headers and no `/api/` calls.",
+      "depends_on": ["US-01","US-02","US-03"]
+    },
+
+    {
+      "key": "US-14", "title": "US-14 Sign in with Google",
+      "labels": ["type:story","area:auth","priority:baseline","review:security","agent:sol"], "milestone": "Sprint 1", "phase": 3,
+      "body": "As a returning user, I want to sign in with my Google account, so that I can access my saved cybersecurity profile without creating another password.\n\n**Design**: Google Identity Services button → ID token → `POST /api/auth/google` verifies with `google-auth-library` (audience = client id) → upsert `users` (google_sub, email, display name) → session JWT in `httpOnly; Secure; SameSite=Lax` cookie, 7-day expiry, `token_version` claim for revocation. `GET /api/me`, `POST /api/auth/logout`.\n\n**Acceptance**\n- [ ] Sign-in works locally and in production; band-1 shows avatar and menu when signed in.\n- [ ] Supertest: invalid/expired token rejected 401; forged audience rejected; cookie flags asserted.\n- [ ] Route guard: account-only pages redirect to `/signin?next=`.\n- [ ] Opus security review on session handling before merge.",
+      "depends_on": ["INF-04","INF-08","INF-05"]
+    },
+    {
+      "key": "US-20", "title": "US-20 Delete account and all saved data",
+      "labels": ["type:story","area:auth","priority:baseline","review:security","agent:terra"], "milestone": "Sprint 1", "phase": 3,
+      "body": "As a privacy-conscious user, I want to delete my account and its saved profile, goals, score history, and notification settings, so that I retain control over my personal data.\n\n**Acceptance**\n- [ ] `DELETE /api/me` with typed confirmation (`DELETE`) in a dialog; cascades every user-owned row (FKs `ON DELETE CASCADE` plus an integration test that counts zero rows afterward across all user tables).\n- [ ] Session revoked (cookie cleared, `token_version` bumped before delete); audit_log keeps only `user_deleted` with a hashed user id.\n- [ ] Settings page explains exactly what is deleted and that HIBP enrollment must be cancelled with HIBP directly.",
+      "depends_on": ["US-14"]
+    },
+    {
+      "key": "US-16", "title": "US-16 Complete a posture questionnaire",
+      "labels": ["type:story","area:questionnaire","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 4,
+      "body": "As a signed-in user, I want to complete a cybersecurity-habits questionnaire, so that the application can create a personalized and explainable posture score.\n\n**Design**: questions defined in `shared/scoring/questions.ts` (id, category, prompt, options with weights, help text). 12–18 questions across the five categories. Answers saved per user with a version stamp.\n\n**Acceptance**\n- [ ] Multi-step form, one category per step, progress indicator, save-and-resume, keyboard operable.\n- [ ] `PUT /api/questionnaire` validates against the question set; `GET` returns current answers.\n- [ ] Submitting triggers scoring (US-17) and a `score_snapshots` row (US-19).",
+      "depends_on": ["US-14","INF-04"]
+    },
+    {
+      "key": "US-17", "title": "US-17 Category scores (scoring engine)",
+      "labels": ["type:story","area:questionnaire","priority:baseline","agent:sol"], "milestone": "Sprint 1", "phase": 4,
+      "body": "As a signed-in user, I want to see separate scores for password hygiene, breach preparedness, multifactor authentication, software exposure, and update habits, so that I can identify the area that needs the most attention.\n\n**Design**: pure function `computeScores(answers, softwareFindings, coachProgress) -> { categories: { key, score, contributions[] }, overall }` in `shared/scoring/engine.ts`. Software exposure derives from active CVE matches (until US-24 exists it uses a neutral value and says so). Each contribution records `{ sourceId, label, delta, reason }` for US-18.\n\n**Acceptance**\n- [ ] Deterministic, table-driven unit tests with golden fixtures for each category, including boundary cases (no answers, all best, all worst).\n- [ ] `GET /api/scores` returns categories and overall; UI shows five sparkline cards per the design seed.\n- [ ] Rules documented in `docs/architecture/scoring.md` in plain language.",
+      "depends_on": ["US-16"]
+    },
+    {
+      "key": "US-18", "title": "US-18 Understand score calculations",
+      "labels": ["type:story","area:questionnaire","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 4,
+      "body": "As a signed-in user, I want to see how each questionnaire answer or software finding affects my score, so that I understand how the score was calculated and how to improve it.\n\n**Acceptance**\n- [ ] Each category card expands to a contribution list: answer or finding, points gained/lost, one-sentence reason, and a \"how to improve\" hint linking to the relevant tool or recommendation.\n- [ ] Uses `contributions[]` from the engine only; no scoring logic in the client.\n- [ ] Screen-reader friendly disclosure pattern (button + `aria-expanded`).",
+      "depends_on": ["US-17"]
+    },
+    {
+      "key": "US-19", "title": "US-19 Track posture over time",
+      "labels": ["type:story","area:questionnaire","priority:baseline","agent:terra"], "milestone": "Sprint 1", "phase": 4,
+      "body": "As a returning user, I want to view changes in my posture score over time, so that I can see whether completing recommended actions has improved my security habits.\n\n**Acceptance**\n- [ ] `score_snapshots` row on every scoring event (questionnaire save, software change, recommendation completion, CVE refresh that changes matches); at most one snapshot per user per hour (coalesce).\n- [ ] `GET /api/scores/history?days=90` powers the sparklines and a `/progress` page with a per-category line chart and a change log (\"Oct 3: enabled MFA on email, +12 MFA\").\n- [ ] Charts have text alternatives (table toggle).",
+      "depends_on": ["US-17"]
+    },
+
+    {
+      "key": "US-06", "title": "US-06 Guided password-manager adoption",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user who is new to password managers, I want guided help choosing and setting up a password manager, so that I can begin using unique passwords without giving this application access to my vault.\n\n**Design**: content-driven coach in `shared/coach/content.ts`: a 3-question chooser (devices, budget, sync needs) that yields a neutral shortlist, then hands off to the checklist (US-07).\n\n**Acceptance**\n- [ ] `/coach` flow works signed-out (no persistence) and signed-in (progress saved).\n- [ ] Never asks for or accepts vault data; copy says so.\n- [ ] Content reviewed for neutrality: Bitwarden featured as the open-source example, at least two others listed.",
+      "depends_on": ["INF-03"]
+    },
+    {
+      "key": "US-07", "title": "US-07 Secure setup checklist",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user adopting a password manager, I want a checklist for installing the manager, creating a strong master passphrase, and enabling multifactor authentication, so that I can configure it safely.\n\n**Acceptance**\n- [ ] Checklist steps: install, create master passphrase (links to US-03 generator, never stores it), enable MFA, save recovery code offline, import/replace weak passwords, install browser extension, enable device unlock.\n- [ ] Each step has why/how text and vendor doc links; steps are keyboard-checkable.\n- [ ] Signed-in completion writes `coach_progress` and feeds the password-hygiene and MFA categories (US-17 contributions).",
+      "depends_on": ["US-06"]
+    },
+    {
+      "key": "US-08", "title": "US-08 Record adoption progress",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user who already has a password manager, I want to record which manager I use and mark recommended setup steps complete, so that my posture plan reflects the protections I have already adopted.\n\n**Acceptance**\n- [ ] `PUT /api/coach/progress` stores manager name (from list or \"other\") and completed step ids; no credentials or vault details.\n- [ ] Changing progress re-scores and snapshots (US-19).",
+      "depends_on": ["US-07","US-14"]
+    },
+    {
+      "key": "US-09", "title": "US-09 Compare important features",
+      "labels": ["type:story","area:coach","priority:baseline","agent:luna"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user comparing password managers, I want to review the security features I should look for and see Bitwarden as an open-source example, so that I can make an informed choice without being forced to use one product.\n\n**Acceptance**\n- [ ] `/learn/password-managers` page: feature glossary (zero-knowledge, open source, audits, MFA support, breach monitoring, sharing, emergency access) with Bitwarden as the worked example; a neutral comparison table of 4–5 managers with source links and a last-reviewed date.\n- [ ] Table is responsive (stacks at 375px) and has a caption.",
+      "depends_on": ["INF-03"]
+    },
+    {
+      "key": "US-10", "title": "US-10 Resume unfinished coach tasks",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a returning user, I want to view unfinished password-manager setup tasks, so that I know which security improvements to complete next.\n\n**Acceptance**\n- [ ] Dashboard card and `/coach` header list remaining steps ordered by security value; empty state when done.\n- [ ] Remaining steps also surface as recommendations (US-27) once that engine exists.",
+      "depends_on": ["US-08"]
+    },
+    {
+      "key": "US-11", "title": "US-11 Enroll in official HIBP breach notifications",
+      "labels": ["type:story","area:coach","priority:baseline","agent:luna"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user who wants future breach warnings, I want to open Have I Been Pwned's official free notification-enrollment page from the application, so that I can register directly with the service that provides the notifications.\n\n**Acceptance**\n- [ ] `/breach-awareness` page explains what HIBP notifications are and opens `https://haveibeenpwned.com/NotifyMe` in a new tab with `rel=\"noopener noreferrer\"`.\n- [ ] Soteria never collects the email for this purpose; copy says so.",
+      "depends_on": ["INF-03"]
+    },
+    {
+      "key": "US-12", "title": "US-12 Record notification enrollment",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user who enrolled in external breach notifications, I want to mark that security action complete in my posture profile, so that my breach-preparedness score reflects the step I took.\n\n**Acceptance**\n- [ ] Signed-in \"I enrolled\" toggle stored in `coach_progress` (step `hibp_notify`); contributes to breach preparedness (US-17) and snapshots (US-19).",
+      "depends_on": ["US-11","US-08"]
+    },
+    {
+      "key": "US-13", "title": "US-13 Respond to a compromised password",
+      "labels": ["type:story","area:coach","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 5,
+      "body": "As a user responding to a compromised-password result, I want a prioritized list of next steps, so that I know to change the password, avoid reusing it, and enable multifactor authentication where available.\n\n**Acceptance**\n- [ ] When US-01 returns a breach, show an ordered response panel: change it now (link to generator), change it everywhere it was reused, enable MFA, watch for phishing, consider a password manager (link to coach).\n- [ ] Works anonymously; if signed in, offers to add \"rotate reused passwords\" as a recommendation (US-27).",
+      "depends_on": ["US-01","US-04"]
+    },
+
+    {
+      "key": "US-21", "title": "US-21 Build a software profile",
+      "labels": ["type:story","area:software-cve","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user concerned about vulnerable software, I want to add supported operating systems, browsers, and desktop applications to my profile, so that I can receive vulnerability information relevant to products I use.\n\n**Acceptance**\n- [ ] `/software` page: searchable picker from `products` catalog grouped by category; add with version (validated by product `versionScheme`) or \"unknown\"; edit and remove.\n- [ ] `GET/POST/PUT/DELETE /api/software` scoped to the user; max 30 entries.\n- [ ] Adding or changing software triggers matching (US-24) and a snapshot (US-19).",
+      "depends_on": ["INF-07","US-14"]
+    },
+    {
+      "key": "US-22", "title": "US-22 Find installed versions",
+      "labels": ["type:story","area:software-cve","priority:baseline","agent:luna"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a nontechnical user, I want product-specific instructions for finding an installed software version, so that I can enter accurate information without already knowing where the version is displayed.\n\n**Acceptance**\n- [ ] Version field shows a \"Where do I find this?\" disclosure rendering `versionHelp` from the catalog, with platform tabs where relevant.\n- [ ] An example of the expected format (`e.g. 128.0.6613.84`) drawn from `versionScheme`.",
+      "depends_on": ["US-21"]
+    },
+    {
+      "key": "US-23", "title": "US-23 Handle an unknown version",
+      "labels": ["type:story","area:software-cve","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user who cannot determine a software version, I want to mark the version as unknown and receive general update guidance, so that the application helps me without claiming that a specific vulnerability affects me.\n\n**Acceptance**\n- [ ] Unknown-version entries show \"update guidance\" (how to enable auto-update, vendor download link) and are excluded from exact CVE matching; matcher reports them as `unknown` confidence, never `exact`.\n- [ ] Software-exposure score treats unknown as a mild penalty with a contribution explaining why (US-18).",
+      "depends_on": ["US-21"]
+    },
+    {
+      "key": "US-24", "title": "US-24 Match relevant CVEs (NVD client, cache, matcher)",
+      "labels": ["type:story","area:software-cve","priority:baseline","review:security","agent:sol"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user with a saved software profile, I want to see CVEs that match my products and versions, so that I can focus on vulnerabilities that may affect my own devices.\n\n**Design**: server module `server/src/cve/`: `nvdClient` (CVE API 2.0, `virtualMatchString=cpe:2.3:a:vendor:product`, `pubStartDate` windowing, optional `NVD_API_KEY`, respects 5 req/30 s unkeyed with a token bucket, exponential backoff); `cveCache` table keyed by CVE id storing raw configurations, CVSS v3.1 base score/severity, published/modified, description; `matcher` evaluates `cpeMatch` ranges (`versionStartIncluding/Excluding`, `versionEndIncluding/Excluding`, exact version) against the user version using a per-`versionScheme` comparator and classifies `exact | possible | unknown`. Results persisted in `cve_matches` (user_software_id, cve_id, confidence, status).\n\n**Acceptance**\n- [ ] Recorded NVD fixtures under `server/test/fixtures/nvd/` (at least 3 products, including a range with `versionEndExcluding`); matcher unit tests cover inclusive/exclusive boundaries, pre-release strings, and marketing versions.\n- [ ] `POST /api/software/refresh` (per user, rate-limited) and `GET /api/findings` return matches with product, version, confidence.\n- [ ] Only products in the catalog are ever queried; the last 2 years of CVEs are fetched initially, then incremental by `lastModStartDate`.\n- [ ] Opus review of matcher correctness and of the false-positive/false-negative policy documented in `docs/architecture/cve-matching.md`.",
+      "depends_on": ["INF-07","INF-04","US-21"]
+    },
+    {
+      "key": "US-25", "title": "US-25 Understand a matched CVE",
+      "labels": ["type:story","area:software-cve","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user reviewing a matched CVE, I want to see its severity, affected product, publication date, and a plain-language explanation, so that I can understand the risk without reading raw security data.\n\n**Acceptance**\n- [ ] Finding card and `/findings/:cveId` detail: SeverityBadge (label + color), CVSS score, product and your version, published date, match confidence with a plain explanation of what `possible` means, NVD description, and a templated plain-language summary (\"An attacker who gets you to open a crafted file could run code on your computer\") generated from CWE/CVSS vector fields with a lookup table in `shared/cve/plain-language.ts`.\n- [ ] Unit tests for the plain-language table across all CVSS AV/PR/UI combinations.",
+      "depends_on": ["US-24"]
+    },
+    {
+      "key": "US-26", "title": "US-26 Verify vulnerability guidance (official links)",
+      "labels": ["type:story","area:software-cve","priority:baseline","agent:luna"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user reviewing a software vulnerability, I want links to the official NVD record and relevant vendor guidance, so that I can verify the information before taking action.\n\n**Acceptance**\n- [ ] Each finding links `https://nvd.nist.gov/vuln/detail/<id>` plus NVD references tagged `Vendor Advisory` or `Patch`, plus the catalog `vendorAdvisoryUrl`.\n- [ ] External links open in a new tab with `noopener noreferrer` and an external-link icon with `aria-label`.",
+      "depends_on": ["US-25"]
+    },
+    {
+      "key": "US-34", "title": "US-34 See CVE data freshness",
+      "labels": ["type:story","area:alerts","priority:baseline","agent:terra"], "milestone": "Sprint 2", "phase": 6,
+      "body": "As a user viewing vulnerability information, I want to see when the CVE data was last updated and whether cached data is stale, so that I can judge how current the findings are when the external service is unavailable.\n\n**Acceptance**\n- [ ] `GET /api/cve/status` returns last successful refresh time, last attempt, last error (sanitized), and `stale: boolean` (older than 24 h).\n- [ ] Freshness chip on `/software`, `/findings`, and the dashboard: \"Updated 3 h ago\" or \"Stale: last updated 2 days ago (NVD unavailable)\"; not color-only.\n- [ ] Refresh button disabled while a refresh runs; shows an accessible progress state.",
+      "depends_on": ["US-24"]
+    },
+
+    {
+      "key": "US-27", "title": "US-27 Prioritize security actions (recommendation engine)",
+      "labels": ["type:story","area:recommendations","priority:baseline","agent:sol"], "milestone": "Sprint 3", "phase": 7,
+      "body": "As a user with several security findings, I want recommendations ordered by urgency and expected benefit, so that I know which improvement to make first.\n\n**Design**: `shared/recommendations/engine.ts`: `generateRecommendations({ scores, findings, coachProgress, answers })` yields records `{ key, category, title, why, how, urgency 1–5, benefit 1–5, effort 1–3, source: cve | questionnaire | coach }`; priority = urgency*2 + benefit - effort, ties broken by category gap. Server upserts into `recommendations` keeping status for existing keys.\n\n**Acceptance**\n- [ ] Golden-fixture tests: a critical CVE outranks any questionnaire item; MFA-on-email outranks MFA-on-forum; completed coach steps do not regenerate.\n- [ ] `GET /api/recommendations?status=active` sorted by priority; `/recommendations` page lists cards with the why/how and a primary action link.\n- [ ] Rules documented in `docs/architecture/recommendations.md`.",
+      "depends_on": ["US-17","US-24","US-08"]
+    },
+    {
+      "key": "US-28", "title": "US-28 Reevaluate after an update",
+      "labels": ["type:story","area:recommendations","priority:baseline","agent:terra"], "milestone": "Sprint 3", "phase": 7,
+      "body": "As a user who updated vulnerable software, I want to record the new version and have the application reevaluate the matching CVEs, so that resolved findings no longer appear as active risks.\n\n**Acceptance**\n- [ ] \"I updated this\" action on a finding or software row opens a version input; saving re-runs the matcher for that product only (no NVD call if cache is fresh).\n- [ ] Matches no longer applicable move to `resolved` with `resolved_version` and timestamp; the recommendation derived from them moves to `resolved`; snapshot recorded.\n- [ ] Integration test: version bump past `versionEndExcluding` resolves the finding.",
+      "depends_on": ["US-27"]
+    },
+    {
+      "key": "US-29", "title": "US-29 Dismiss a finding with context",
+      "labels": ["type:story","area:recommendations","priority:baseline","agent:terra"], "milestone": "Sprint 3", "phase": 7,
+      "body": "As a user who believes a CVE does not apply, I want to dismiss it with a reason while keeping the decision in my history, so that I can manage false matches without silently erasing the finding.\n\n**Acceptance**\n- [ ] Dismiss dialog with reason select (not installed, different edition, already mitigated, other + text ≤ 280 chars); writes `dismissed`, `dismiss_reason`, timestamp; audit_log entry.\n- [ ] Dismissed findings are excluded from scores and active recommendations but appear in history (US-30) and can be un-dismissed.\n- [ ] A later refresh never resurrects a dismissed CVE for the same product/version.",
+      "depends_on": ["US-27"]
+    },
+    {
+      "key": "US-30", "title": "US-30 Review completed actions",
+      "labels": ["type:story","area:recommendations","priority:baseline","agent:terra"], "milestone": "Sprint 3", "phase": 7,
+      "body": "As a returning user, I want to view completed, resolved, and dismissed recommendations separately from active recommendations, so that I can review my progress without cluttering my current task list.\n\n**Acceptance**\n- [ ] `/recommendations` has tabs Active / Completed / Resolved / Dismissed with counts; each item shows when and why its status changed.\n- [ ] \"Mark complete\" on active items (for non-CVE items) with an optional note; re-scores and snapshots.\n- [ ] Tabs are keyboard operable (`role=tablist`, arrow keys).",
+      "depends_on": ["US-28","US-29"]
+    },
+
+    {
+      "key": "US-31", "title": "US-31 In-app CVE alerts (scheduled refresh job)",
+      "labels": ["type:story","area:alerts","priority:baseline","agent:sol"], "milestone": "Sprint 3", "phase": 8,
+      "body": "As a user with saved software, I want an in-application alert when newly retrieved CVE data matches my profile, so that I can respond without manually searching for vulnerabilities.\n\n**Design**: `POST /api/internal/refresh` protected by `INTERNAL_JOB_SECRET`, invoked every 6 hours by `.github/workflows/cve-refresh.yml` (cron) so it works on App Service tiers without Always On. The job refreshes `cve_cache` for all catalog products in use, re-matches every user, and inserts `alerts` rows for new `exact|possible` matches. Alerts: `{ user_id, type, title, body, cve_id?, read_at }`.\n\n**Acceptance**\n- [ ] Bell in band 1 shows unread count; `/alerts` list with mark-read and mark-all-read; `GET/PATCH /api/alerts`.\n- [ ] Integration test: a fixture CVE added between two refreshes produces exactly one alert per affected user and none for dismissed matches.\n- [ ] Job is idempotent and logs to `audit_log`; failures set the freshness error (US-34).",
+      "depends_on": ["US-24","US-29"]
+    },
+    {
+      "key": "US-35", "title": "US-35 View a useful dashboard",
+      "labels": ["type:story","area:dashboard","priority:baseline","agent:terra"], "milestone": "Sprint 3", "phase": 8,
+      "body": "As a signed-in user, I want a dashboard that combines category scores with a prioritized action list, so that I can understand my posture and immediately see what to do next.\n\n**Acceptance**\n- [ ] `/` when signed in: overall score sentence, five sparkline cards (US-17/19), top 5 recommendations (US-27), unread alerts (US-31), freshness chip (US-34), coach remaining steps (US-10); empty states with geometric illustrations for each block when data is missing.\n- [ ] Single `GET /api/dashboard` aggregate to avoid waterfall requests; skeleton loading states.\n- [ ] Signed-out `/` is a landing page that leads to the password tools and sign-in.",
+      "depends_on": ["US-27","US-31","US-34","US-10"]
+    },
+    {
+      "key": "US-36", "title": "US-36 Filter vulnerability findings",
+      "labels": ["type:story","area:dashboard","priority:baseline","agent:terra"], "milestone": "Sprint 3", "phase": 8,
+      "body": "As a user with multiple saved products, I want to filter findings by product and severity, so that I can focus on the vulnerabilities most relevant to the device I am updating.\n\n**Acceptance**\n- [ ] `/findings` filter bar: product multi-select, severity checkboxes, confidence, status; filters reflected in the URL query string; result count announced via `aria-live`.\n- [ ] Server-side filtering on `GET /api/findings`; indexed columns.",
+      "depends_on": ["US-25"]
+    },
+
+    {
+      "key": "US-37", "title": "US-37 Navigate without a mouse (keyboard audit)",
+      "labels": ["type:story","area:a11y","priority:baseline","agent:luna"], "milestone": "Sprint 4", "phase": 9,
+      "body": "As a keyboard-only user, I want to operate the password tools, questionnaire, software profile, and dashboard without a mouse, so that I can use the core application independently.\n\n**Acceptance**\n- [ ] Playwright keyboard-only journeys (no mouse events) for: run breach check, generate password, complete questionnaire, add software with version, dismiss a finding, mark recommendation complete.\n- [ ] Skip link, focus management on route change and dialog open/close, no focus traps, visible focus everywhere; axe passes on every route with zero serious/critical violations.\n- [ ] Fixes filed as `type:bug` issues and linked here.",
+      "depends_on": ["US-35"]
+    },
+    {
+      "key": "US-38", "title": "US-38 Use core tools on a phone (375px audit)",
+      "labels": ["type:story","area:a11y","priority:baseline","agent:terra"], "milestone": "Sprint 4", "phase": 9,
+      "body": "As a user viewing the site on a phone, I want the password tools and prioritized recommendations to remain readable and usable on a small screen, so that I can improve my posture without needing a desktop computer.\n\n**Acceptance**\n- [ ] Playwright at 375x667: no horizontal scroll on any route; bottom tab bar works; tables stack or scroll within their container; 44px targets.\n- [ ] Visual snapshots of tools and recommendations at 375px stored in the repo for the testing report.",
+      "depends_on": ["US-35"]
+    },
+    {
+      "key": "INF-09", "title": "Testing report and coverage gates (course Milestone 6)",
+      "labels": ["type:chore","area:devops","priority:baseline","agent:luna"], "milestone": "Sprint 4", "phase": 10,
+      "body": "**Acceptance**\n- [ ] Coverage thresholds in CI: `shared` 90 %, `server` 80 %, `client` 70 % lines.\n- [ ] `docs/testing/report.md`: test strategy (unit / API integration / e2e / accessibility / privacy), traceability matrix story → tests, defect log, known gaps.\n- [ ] Privacy test suite enumerated: log redaction, no password in network, no credential columns, deletion cascade.",
+      "depends_on": ["US-37","US-38"]
+    },
+    {
+      "key": "INF-10", "title": "Demo data, presentation script, and code-review packet",
+      "labels": ["type:chore","area:devops","priority:baseline","agent:luna"], "milestone": "Sprint 4", "phase": 10,
+      "body": "**Acceptance**\n- [ ] `npm run db:seed:demo` creates a demo user with answers, software, cached CVE fixtures, matches, and history so a sprint review needs no live NVD call.\n- [ ] `docs/demo-script.md` per sprint review; `docs/code-review-packet.md` for course Milestone 5 (week 12) listing the PRs, reviewers, and AI-assistance disclosures.",
+      "depends_on": ["US-35"]
+    },
+
+    {
+      "key": "US-32", "title": "US-32 Control email digests (stretch)",
+      "labels": ["type:story","area:alerts","priority:stretch","review:security","agent:sol"], "milestone": "Sprint 4", "phase": 11,
+      "body": "As a user who wants CVE email alerts, I want to explicitly opt into a daily digest and unsubscribe whenever I choose, so that I control whether the application contacts me.\n\n**Charter note**: a full email-digest system is out of the semester baseline. Attempt only after every `priority:baseline` issue is closed. Provider: a free-tier transactional email API (Resend free tier or Azure Communication Services trial); provider behind `server/src/email/provider.ts`.\n\n**Acceptance**\n- [ ] Opt-in default off; `notification_settings` row; signed unsubscribe link works without login; every email has the link.\n- [ ] Only the Google account email is used; no other addresses collected.",
+      "depends_on": ["US-31"]
+    },
+    {
+      "key": "US-33", "title": "US-33 Group related email alerts (stretch)",
+      "labels": ["type:story","area:alerts","priority:stretch","agent:terra"], "milestone": "Sprint 4", "phase": 11,
+      "body": "As a user receiving a CVE digest, I want related new findings grouped into one concise message, so that I can understand what changed without receiving an email for every individual record.\n\n**Acceptance**\n- [ ] Daily job (GitHub Actions cron → `/api/internal/digest`) groups unread alerts since last digest by product, highest severity first, max 10 lines, links to `/findings`; none sent when nothing changed.\n- [ ] Snapshot test of the rendered text and HTML email.",
+      "depends_on": ["US-32"]
+    }
+  ]
+}
