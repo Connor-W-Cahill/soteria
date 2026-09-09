@@ -23,6 +23,16 @@ and only as a short hash prefix.
 - A Playwright test intercepts every request during a check and asserts the only
   request is the range call and that no request URL or body contains the password
   or the full hash.
+- **The client document is served with a Content-Security-Policy whose
+  `connect-src` is `'self' https://api.pwnedpasswords.com` and nothing else.**
+  This is the control that _enforces_ this ADR rather than describing it: an
+  injected `fetch` / `sendBeacon` / `WebSocket` to any other origin is blocked
+  by the browser regardless of whether a test observes it (the Playwright leak
+  test was shown bypassable by a delayed `sendBeacon` — issue #80). The policy
+  is defined in `client/csp.mjs`; production is served via
+  `client/public/staticwebapp.config.json` (Azure Static Web Apps) and mirrored
+  by `vite preview`, and the dev server serves a policy that differs only in the
+  inline-script/style and HMR-socket allowances Vite needs. See issue #81.
 
 ## Consequences
 
@@ -33,6 +43,10 @@ and only as a short hash prefix.
   real reason the logging redaction list in
   [`conventions.md`](../conventions.md) is a safety net rather than the primary
   defence.
+- The privacy invariant no longer rests on code convention plus a test that only
+  observes leaks it happens to be looking at. The CSP `connect-src` is a
+  browser-enforced ceiling; the leak test is now a second line that checks the
+  code stays well within it.
 - Feature availability depends on HIBP; a failure is shown as a clear,
   non-blocking error and the rest of the tools still work.
 - Any sequence diagram that shows a password or full hash reaching the Soteria
