@@ -16,8 +16,9 @@
  * so the deployed site is never weaker than dev on the axis that matters.
  *
  * `PROD` is the single source of truth for the deployed policy: it is served by
- * `vite preview` and asserted byte-for-byte against
- * `public/staticwebapp.config.json` in `csp.test.ts`.
+ * `vite preview`, written to `public/security-headers.json` (which the API
+ * sends with every client document, ADR-0014), and asserted byte-for-byte
+ * against that file in `csp.test.ts`.
  *
  * The `accounts.google.com` entries below are Google Identity Services (US-14),
  * and they are why the "only HIBP" sentence above needs qualifying: see
@@ -36,10 +37,9 @@
  * before it was made. That was found by an independent security review, not by a
  * test, because the tests pinned the broken list.
  *
- * Derived from `VITE_API_URL` rather than hard-coded, so this stays correct on
- * both sides of the same-origin move tracked as a blocking bug: when the API is
- * served from the document's own origin, `VITE_API_URL` is empty, nothing is
- * added, and `'self'` is the whole answer.
+ * Derived from `VITE_API_URL` rather than hard-coded. Since #111 the API serves
+ * the client from its own origin (ADR-0014), so the deploy leaves
+ * `VITE_API_URL` empty, nothing is added, and `'self'` is the whole answer.
  */
 function apiOrigin(env = process.env) {
   const raw = env.VITE_API_URL?.trim();

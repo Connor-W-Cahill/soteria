@@ -59,8 +59,9 @@ The course architecture and component-design artifacts live in
 
 ## Deployment
 
-Azure Static Web Apps (client), Azure App Service on Linux/Node 22 (API), and
-Azure SQL Database, provisioned by [`infra/main.bicep`](infra/main.bicep) via
+Azure App Service on Linux/Node 22, serving the API and the built client from one
+origin ([ADR-0014](docs/architecture/adr/0014-serve-client-from-app-service.md)),
+and Azure SQL Database, provisioned by [`infra/main.bicep`](infra/main.bicep) via
 [`infra/deploy.sh`](infra/deploy.sh) and deployed by
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) after CI passes
 on `main`. The walkthrough, the GitHub secrets, and the production security

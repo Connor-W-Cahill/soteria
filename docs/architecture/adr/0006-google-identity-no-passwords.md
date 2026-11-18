@@ -35,5 +35,7 @@ adds no credential store and no password-reset flow.
   `token_version`; there is no external credential to revoke.
 - During development the Google OAuth app is in "testing" status with explicit
   test users; this is documented in `deploy.md`.
-- The httpOnly session cookie is why CORS must be an exact-origin allowlist with
-  `credentials: true` (see [0005](0005-azure-swa-app-service-hosting.md)).
+- The httpOnly `SameSite=Lax` session cookie requires the client and API to be
+  same-site, which is why the API serves the client from its own origin (see
+  [0014](0014-serve-client-from-app-service.md)); CORS stays an exact-origin
+  allowlist with `credentials: true` as a backstop.

@@ -11,21 +11,22 @@ One ADR per row of that table that carries a real trade-off. Rows that are pure
 consequence of another decision (for example the privacy invariants, which follow
 from the auth and breach-check choices) are covered in the ADR that causes them.
 
-| ADR                                                | Decision                                                 | Status   |
-| -------------------------------------------------- | -------------------------------------------------------- | -------- |
-| [0001](0001-monorepo-npm-workspaces.md)            | npm-workspaces monorepo (`client` / `server` / `shared`) | Accepted |
-| [0002](0002-react-vite-frontend.md)                | React 18 + Vite + TypeScript frontend                    | Accepted |
-| [0003](0003-node-express-backend.md)               | Node 22 + Express 5 + TypeScript backend                 | Accepted |
-| [0004](0004-azure-sql-knex-mssql.md)               | Azure SQL Database via Knex + `mssql`                    | Accepted |
-| [0005](0005-azure-swa-app-service-hosting.md)      | Azure Static Web Apps + App Service (Linux) hosting      | Accepted |
-| [0006](0006-google-identity-no-passwords.md)       | Google Identity sign-in; Soteria stores no passwords     | Accepted |
-| [0007](0007-browser-only-hibp-breach-check.md)     | Browser-to-HIBP k-anonymity breach check                 | Accepted |
-| [0008](0008-client-side-strength-zxcvbn.md)        | Client-side password strength with `@zxcvbn-ts/core`     | Accepted |
-| [0009](0009-nvd-cve-api-external-data.md)          | NVD CVE API 2.0 as the required external live data       | Accepted |
-| [0010](0010-github-actions-cron-scheduled-work.md) | GitHub Actions cron for all scheduled work               | Accepted |
-| [0011](0011-testing-stack.md)                      | Vitest + Supertest + Playwright + axe testing stack      | Accepted |
-| [0012](0012-seeded-design-system.md)               | Visual design derived from a fixed seed                  | Accepted |
-| [0013](0013-csp-allowances-for-google-sign-in.md)  | CSP allowances for Google Identity Services              | Accepted |
+| ADR                                                | Decision                                                 | Status             |
+| -------------------------------------------------- | -------------------------------------------------------- | ------------------ |
+| [0001](0001-monorepo-npm-workspaces.md)            | npm-workspaces monorepo (`client` / `server` / `shared`) | Accepted           |
+| [0002](0002-react-vite-frontend.md)                | React 18 + Vite + TypeScript frontend                    | Accepted           |
+| [0003](0003-node-express-backend.md)               | Node 22 + Express 5 + TypeScript backend                 | Accepted           |
+| [0004](0004-azure-sql-knex-mssql.md)               | Azure SQL Database via Knex + `mssql`                    | Accepted           |
+| [0005](0005-azure-swa-app-service-hosting.md)      | Azure Static Web Apps + App Service (Linux) hosting      | Superseded by 0014 |
+| [0006](0006-google-identity-no-passwords.md)       | Google Identity sign-in; Soteria stores no passwords     | Accepted           |
+| [0007](0007-browser-only-hibp-breach-check.md)     | Browser-to-HIBP k-anonymity breach check                 | Accepted           |
+| [0008](0008-client-side-strength-zxcvbn.md)        | Client-side password strength with `@zxcvbn-ts/core`     | Accepted           |
+| [0009](0009-nvd-cve-api-external-data.md)          | NVD CVE API 2.0 as the required external live data       | Accepted           |
+| [0010](0010-github-actions-cron-scheduled-work.md) | GitHub Actions cron for all scheduled work               | Accepted           |
+| [0011](0011-testing-stack.md)                      | Vitest + Supertest + Playwright + axe testing stack      | Accepted           |
+| [0012](0012-seeded-design-system.md)               | Visual design derived from a fixed seed                  | Accepted           |
+| [0013](0013-csp-allowances-for-google-sign-in.md)  | CSP allowances for Google Identity Services              | Accepted           |
+| [0014](0014-serve-client-from-app-service.md)      | Serve the client from the App Service (one origin)       | Accepted           |
 
 ## Format
 

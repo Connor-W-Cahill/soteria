@@ -34,7 +34,7 @@ Assumptions made because the request was ambiguous:
 | Frontend | React 18 + Vite + TypeScript strict, React Router, TanStack Query, plain CSS with tokens | Course requires React; tokens make the seed enforceable. |
 | Backend | Node 22 LTS, Express 5, TypeScript, zod, pino, helmet, express-rate-limit | Azure App Service supports Node 22; small and conventional. |
 | Database | Azure SQL Database (free offer) via Knex + `mssql`; local dev via SQL Server 2022 in Docker | Course requires Azure SQL; Knex migrations are boring and reliable with mssql. |
-| Hosting | Azure Static Web Apps (client), Azure App Service Linux (API), Azure SQL | All have free or student tiers; SWA/App Service split keeps the API a plain Node process. |
+| Hosting | Azure App Service Linux (API **and** client build, one origin), Azure SQL | Free or student tiers. Revised by ADR-0014 (#111): the SWA/App Service split was cross-site, which broke the `SameSite=Lax` session cookie. |
 | Auth | Google Identity Services → server verifies ID token → httpOnly session JWT cookie | US-14; no passwords ever. |
 | Breach check | HIBP Pwned Passwords range API called from the browser with `Add-Padding` | US-01/05: the server is never in the path. |
 | Strength | `@zxcvbn-ts/core` in the browser | US-04; local only. |

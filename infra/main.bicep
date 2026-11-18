@@ -1,4 +1,6 @@
-// Soteria infrastructure: Static Web App (client), App Service (API), Azure SQL.
+// Soteria infrastructure: App Service (API + client, one origin), Azure SQL.
+// The App Service serves the client build itself so the SameSite=Lax session
+// cookie is same-origin (issue #111, ADR-0014); there is no Static Web App.
 // Deploy with infra/deploy.sh, or:
 //   az deployment group create -g <rg> -f infra/main.bicep -p @infra/main.parameters.json
 //
@@ -9,12 +11,8 @@
 @maxLength(12)
 param namePrefix string = 'soteria'
 
-@description('Region for the API and database. Static Web Apps are deployed to their own region list.')
+@description('Region for the App Service and database.')
 param location string = resourceGroup().location
-
-@description('Region for the Static Web App. Free tier is not available everywhere.')
-@allowed(['westus2', 'centralus', 'eastus2', 'westeurope', 'eastasia'])
-param staticWebAppLocation string = 'centralus'
 
 @description('Administrator login for Azure SQL. Not a Soteria user account.')
 param sqlAdminLogin string
@@ -31,7 +29,9 @@ var suffix = uniqueString(resourceGroup().id)
 var sqlServerName = '${namePrefix}-sql-${suffix}'
 var databaseName = '${namePrefix}db'
 var appServiceName = '${namePrefix}-api-${suffix}'
-var staticWebAppName = '${namePrefix}-web-${suffix}'
+// The site's one public origin. Built from the name rather than read from the
+// resource so the site's own settings can refer to it.
+var siteOrigin = 'https://${appServiceName}.azurewebsites.net'
 
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
@@ -89,20 +89,6 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   }
 }
 
-resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
-  name: staticWebAppName
-  location: staticWebAppLocation
-  sku: {
-    name: 'Free'
-    tier: 'Free'
-  }
-  properties: {
-    // The client is deployed by .github/workflows/deploy.yml, not by a
-    // Static Web Apps-managed GitHub Action.
-    allowConfigFileUpdates: true
-  }
-}
-
 resource api 'Microsoft.Web/sites@2023-12-01' = {
   name: appServiceName
   location: location
@@ -121,11 +107,12 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
       http20Enabled: true
       healthCheckPath: '/api/health'
       appCommandLine: 'node dist/server.js'
-      // Belt to the braces of helmet's own CORS-free posture: only the Static
-      // Web App origin may call the API from a browser.
+      // The client is served from this same origin, so browser calls are not
+      // cross-origin and this is inert. Kept, rather than removed in the same
+      // change, as a fail-closed restriction: no other origin may call the API.
       cors: {
         allowedOrigins: [
-          'https://${staticWebApp.properties.defaultHostname}'
+          siteOrigin
         ]
         supportCredentials: true
       }
@@ -144,7 +131,7 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
         }
         {
           name: 'WEB_ORIGIN'
-          value: 'https://${staticWebApp.properties.defaultHostname}'
+          value: siteOrigin
         }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -160,7 +147,6 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
 
 output apiName string = api.name
 output apiUrl string = 'https://${api.properties.defaultHostName}'
-output staticWebAppName string = staticWebApp.name
-output webUrl string = 'https://${staticWebApp.properties.defaultHostname}'
+output webUrl string = 'https://${api.properties.defaultHostName}'
 output sqlServerFqdn string = sqlServer.properties.fullyQualifiedDomainName
 output databaseName string = sqlDatabase.name

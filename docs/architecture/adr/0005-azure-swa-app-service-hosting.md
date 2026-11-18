@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (implementation plan section 2, 2026-09-08).
+Superseded by [0014](0014-serve-client-from-app-service.md) for client hosting
+(issue #111). Accepted (implementation plan section 2, 2026-09-08).
 
 ## Context
 

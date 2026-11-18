@@ -10,7 +10,7 @@ import { expect, test } from "@playwright/test";
  * only for inline script/style and the HMR socket; its `connect-src`
  * third-party allowlist is identical to production's, and that is the directive
  * under test here. `csp.test.ts` pins the production policy and the deployed
- * `staticwebapp.config.json` to the same allowlist.
+ * `security-headers.json` to the same allowlist.
  */
 
 const HIBP_SUFFIX = "003D68EB55068C33ACE09247EE4C639306B"; // arbitrary miss

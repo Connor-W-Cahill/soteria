@@ -8,14 +8,14 @@ export default defineConfig({
   server: {
     // Enforce the client CSP in development too. The dev policy allows what
     // Vite needs (inline preamble/styles, the HMR websocket) and nothing else;
-    // `vite preview` and Azure Static Web Apps serve the stricter PROD policy.
+    // `vite preview` and the API (in production) serve the stricter PROD policy.
     headers: { "Content-Security-Policy": DEV_CSP },
     proxy: {
       "/api": "http://localhost:3000",
     },
   },
   preview: {
-    // Mirror exactly what Azure Static Web Apps will send for the built site.
+    // Mirror exactly what the API sends with the built site (ADR-0014).
     headers: { "Content-Security-Policy": PROD_CSP },
   },
 });

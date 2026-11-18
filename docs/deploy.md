@@ -1,12 +1,17 @@
 # Deploying Soteria to Azure
 
-Delivered by **INF-05**. Three resources, all on free or student-friendly tiers:
+Delivered by **INF-05**; topology revised by **#111** ([ADR-0014](architecture/adr/0014-serve-client-from-app-service.md)).
+Two resources, both on free or student-friendly tiers:
 
-| Tier     | Service                           | SKU                                            |
-| -------- | --------------------------------- | ---------------------------------------------- |
-| Client   | Azure Static Web Apps             | Free                                           |
-| API      | Azure App Service, Linux, Node 22 | F1 (free) or B1                                |
-| Database | Azure SQL Database                | General Purpose serverless with the free offer |
+| Tier                | Service                           | SKU                                            |
+| ------------------- | --------------------------------- | ---------------------------------------------- |
+| Client + API (site) | Azure App Service, Linux, Node 22 | F1 (free) or B1                                |
+| Database            | Azure SQL Database                | General Purpose serverless with the free offer |
+
+The App Service serves the built client and the API from **one origin**. That is
+what makes the `SameSite=Lax` session cookie work: a Static Web App on
+`*.azurestaticapps.net` calling an API on `*.azurewebsites.net` is cross-site, and
+the browser silently drops the cookie (#111).
 
 Everything is described in [`infra/main.bicep`](../infra/main.bicep) and
 provisioned by [`infra/deploy.sh`](../infra/deploy.sh).
@@ -36,8 +41,7 @@ strong one, store it in your password manager, and **do not** paste it into a
 commit, an issue, a PR, or a chat with an agent. The script writes it straight
 into an App Service setting and never into a file or the deployment history.
 
-It prints the client URL, the API URL, the SQL FQDN, and the values you need as
-GitHub secrets.
+It prints the site URL, the SQL FQDN, and the values you need as GitHub secrets.
 
 ### Register the resource providers (first time on a fresh subscription)
 
@@ -78,23 +82,26 @@ Set these in **Settings → Secrets and variables → Actions**, in the
 `production` environment. Names only are listed here; values come from the
 script output or the Azure portal. **None of these ever goes in the repository.**
 
-| Secret                            | Where it comes from                                                       | Used for                                               |
-| --------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `AZURE_WEBAPP_NAME`               | `infra/deploy.sh` output                                                  | Naming the App Service to deploy to.                   |
-| `AZURE_WEBAPP_PUBLISH_PROFILE`    | App Service → Overview → _Download publish profile_ (paste the whole XML) | Authenticating the API deploy.                         |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | `infra/deploy.sh` output                                                  | Authenticating the client deploy.                      |
-| `VITE_API_URL`                    | `infra/deploy.sh` output                                                  | Baked into the client build so it calls the right API. |
-| `API_URL`                         | Same value as `VITE_API_URL`                                              | The post-deploy health check.                          |
-| `DATABASE_URL`                    | Built from the SQL FQDN and the admin password                            | Running migrations during deploy.                      |
-| `GOOGLE_CLIENT_ID`                | Google Cloud console → Credentials → OAuth 2.0 Client ID (Web)            | Verifying ID tokens, and baked into the client build.  |
-| `SESSION_SECRET`                  | `openssl rand -base64 48`                                                 | Signing Soteria's own session cookies.                 |
+| Secret                         | Where it comes from                                                       | Used for                                              |
+| ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `AZURE_WEBAPP_NAME`            | `infra/deploy.sh` output                                                  | Naming the App Service to deploy to.                  |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | App Service → Overview → _Download publish profile_ (paste the whole XML) | Authenticating the API deploy.                        |
+| `API_URL`                      | `infra/deploy.sh` output (the site URL)                                   | The post-deploy health and CSP checks.                |
+| `DATABASE_URL`                 | Built from the SQL FQDN and the admin password                            | Running migrations during deploy.                     |
+| `GOOGLE_CLIENT_ID`             | Google Cloud console → Credentials → OAuth 2.0 Client ID (Web)            | Verifying ID tokens, and baked into the client build. |
+| `SESSION_SECRET`               | `openssl rand -base64 48`                                                 | Signing Soteria's own session cookies.                |
 
 Add `NVD_API_KEY` alongside these when Phase 6 lands (see the runbook).
+
+`VITE_API_URL` and `AZURE_STATIC_WEB_APPS_API_TOKEN` are no longer used: the
+deploy builds the client with `VITE_API_URL` empty so every call is a relative,
+same-origin path. Delete them if an earlier provisioning run created them.
 
 ### Google sign-in (US-14)
 
 Create the OAuth client in the Google Cloud console as an **application type of
-Web application**, and list the deployed client origin under _Authorised
+Web application**, and list the site origin (`https://<app service
+name>.azurewebsites.net`, printed by `infra/deploy.sh`) under _Authorised
 JavaScript origins_ — Google Identity refuses to render its button on an origin
 it does not recognise, which is the most common reason sign-in "silently does
 nothing".
@@ -121,13 +128,16 @@ happen without a human.
 unreviewed branch or a fork can never reach production. It:
 
 1. builds the API (`tsc`) and the client (`vite build`);
-2. assembles a self-contained API bundle — compiled JS plus a production-only
-   dependency tree — so App Service runs `node dist/server.js` with no build
-   step and `SCM_DO_BUILD_DURING_DEPLOYMENT=false`;
+2. assembles a self-contained bundle — compiled JS, the client build in
+   `public/`, and a production-only dependency tree — so App Service runs
+   `node dist/server.js` with no build step and
+   `SCM_DO_BUILD_DURING_DEPLOYMENT=false`;
 3. applies migrations and seeds against `DATABASE_URL`;
-4. deploys the API to App Service and the client to Static Web Apps;
+4. deploys the bundle to App Service;
 5. polls `/api/health` until it reports `status: "ok"` **and**
-   `dbConnected: true`, and fails the deploy if it never does.
+   `dbConnected: true`, and fails the deploy if it never does;
+6. fetches `/signin` and fails unless it carries the client CSP and
+   `X-Frame-Options: DENY`.
 
 Deploys are serialised by a `concurrency` group, so two pushes cannot race.
 
@@ -137,20 +147,26 @@ Deploys are serialised by a `concurrency` group, so two pushes cannot race.
   `securityHeaders()` sends HSTS (`max-age=31536000; includeSubDomains;
 preload`) when `NODE_ENV=production`. HSTS is off in development so
   `http://localhost` is never pinned.
-- **CORS is locked to the Static Web App origin.** `WEB_ORIGIN` is set by
-  `infra/deploy.sh` to exactly the SWA hostname, and
-  `server/src/http/security.ts` allows that origin and no other.
-  **There is no wildcard fallback**: if `WEB_ORIGIN` is unset in production the
-  allowlist is empty, so a misconfiguration fails closed instead of opening the
-  API. `credentials: true` is set because the session is an httpOnly cookie
-  (US-14), which makes an exact-origin allowlist mandatory. App Service is
-  configured with the same single origin as a second layer.
-- **helmet defaults are on**, plus `default-src 'none'` (the API serves JSON
-  only), `Referrer-Policy: no-referrer`, and `Cross-Origin-Resource-Policy:
-same-site`.
-- **The client document carries its own CSP**, served by Azure Static Web Apps
-  from `client/public/staticwebapp.config.json` (generated from
-  `client/csp.mjs`; run `npm run csp:gen -w @soteria/client` after editing it).
+- **Client and API share one origin**, so browser calls are not cross-origin
+  and the `SameSite=Lax` session cookie is stored and sent. `SameSite=None` is
+  deliberately not used: it would delete the cookie's CSRF protection.
+- **CORS stays locked as a fail-closed backstop.** `WEB_ORIGIN` is set by
+  `infra/main.bicep` to the site's own origin, and
+  `server/src/http/security.ts` allows that origin and no other. Same-origin
+  makes it inert, but **there is no wildcard fallback**: if `WEB_ORIGIN` is unset
+  in production the allowlist is empty, so no other site can call the API with
+  the user's cookie. App Service is configured with the same single origin as a
+  second layer.
+- **helmet defaults are on**, plus `default-src 'none'` for API responses,
+  `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-site`, and
+  `Cross-Origin-Opener-Policy: same-origin-allow-popups` (Google sign-in's popup
+  needs it).
+- **The client document carries its own CSP**, sent by the API
+  (`server/src/http/client.ts`) from `security-headers.json` in the client build,
+  which is generated into `client/public/` from `client/csp.mjs` (run
+  `npm run csp:gen -w @soteria/client` after editing it). The API refuses to
+  start in production if that file is missing, so the document can never go out
+  without a CSP.
   `connect-src` is `'self' https://api.pwnedpasswords.com` only — this is what
   enforces ADR-0007's "the password never leaves the browser" in the browser
   itself. `vite preview` serves the identical policy; the dev server serves one
@@ -165,7 +181,6 @@ same-site`.
 
 ## 6. Costs and the free tiers
 
-- Static Web Apps Free: no cost, 100 GB bandwidth per month.
 - App Service F1: free, 60 CPU-minutes per day, no Always On. The API therefore
   cold-starts; the scheduled jobs in Phase 8 run from GitHub Actions cron
   against secret-protected endpoints rather than relying on Always On. Move to

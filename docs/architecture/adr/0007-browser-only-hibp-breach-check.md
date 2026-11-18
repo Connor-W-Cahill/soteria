@@ -30,7 +30,7 @@ and only as a short hash prefix.
   by the browser regardless of whether a test observes it (the Playwright leak
   test was shown bypassable by a delayed `sendBeacon` — issue #80). The policy
   is defined in `client/csp.mjs`; production is served via
-  `client/public/staticwebapp.config.json` (Azure Static Web Apps) and mirrored
+  `client/public/security-headers.json` (sent by the API, ADR-0014) and mirrored
   by `vite preview`, and the dev server serves a policy that differs only in the
   inline-script/style and HMR-socket allowances Vite needs. See issue #81.
 

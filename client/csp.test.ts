@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { API_ORIGIN, DEV_CSP, PROD_CSP, STATIC_HEADERS } from "./csp.mjs";
-import { swaConfig } from "./scripts/gen-swa-config.mjs";
+import { securityHeaders } from "./scripts/gen-security-headers.mjs";
 
 function directives(csp: string): Map<string, string[]> {
   return new Map(
@@ -123,25 +123,40 @@ describe("dev CSP", () => {
   });
 });
 
-describe("staticwebapp.config.json", () => {
+describe("security-headers.json", () => {
+  // The API sends these with every client document it serves (ADR-0014), and
+  // server/src/http/client.test.ts asserts it sends exactly this file.
   const committed = readFileSync(
-    fileURLToPath(
-      new URL("./public/staticwebapp.config.json", import.meta.url),
-    ),
+    fileURLToPath(new URL("./public/security-headers.json", import.meta.url)),
     "utf8",
   );
 
   it("serves the production CSP verbatim", () => {
     const parsed = JSON.parse(committed);
-    expect(parsed.globalHeaders["content-security-policy"]).toBe(PROD_CSP);
+    expect(parsed["content-security-policy"]).toBe(PROD_CSP);
   });
 
-  it("matches gen-swa-config.mjs (run `npm run csp:gen` if this fails)", () => {
-    expect(JSON.parse(committed)).toEqual(swaConfig);
+  it("matches gen-security-headers.mjs (run `npm run csp:gen` if this fails)", () => {
+    expect(JSON.parse(committed)).toEqual(securityHeaders);
+  });
+
+  it("needs no separate API origin, because the API serves the client (#111)", () => {
+    // Same-origin is what lets the SameSite=Lax session cookie work. A
+    // committed file with an API origin in it means someone reintroduced a
+    // cross-site topology.
+    expect(
+      directives(JSON.parse(committed)["content-security-policy"]).get(
+        "connect-src",
+      )?.[0],
+    ).toBe("'self'");
+    expect(JSON.parse(committed)["content-security-policy"]).not.toMatch(
+      /azurewebsites|azurestaticapps/,
+    );
   });
 
   it("sends the deployed document the same hardening headers as helmet does for the API", () => {
     expect(STATIC_HEADERS["x-content-type-options"]).toBe("nosniff");
     expect(STATIC_HEADERS["referrer-policy"]).toBe("no-referrer");
+    expect(STATIC_HEADERS["x-frame-options"]).toBe("DENY");
   });
 });
