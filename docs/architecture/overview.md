@@ -71,7 +71,7 @@ Notes:
 graph TB
     user["Person (browser)"]
 
-    subgraph client["Client tier — Azure Static Web Apps (Free)"]
+    subgraph client["Client — static build served by the App Service (same origin)"]
         spa["React SPA<br/>React 18, Vite, React Router,<br/>TanStack Query, tokens.css"]
     end
 
@@ -93,7 +93,7 @@ graph TB
     nvd["NVD CVE API 2.0"]
 
     user -->|HTTPS| spa
-    spa -->|"JSON over HTTPS<br/>(cookie, exact-origin CORS)"| http
+    spa -->|"JSON over HTTPS<br/>(same-origin, SameSite=Lax cookie)"| http
     user -->|"SHA-1 prefix, HTTPS"| hibp
     http --> auth
     http --> cve
@@ -132,8 +132,7 @@ graph TB
     end
 
     subgraph azure["Azure — resource group soteria-rg (student subscription)"]
-        swa["Azure Static Web Apps (Free)<br/>client bundle + CDN + HTTPS"]
-        appsvc["Azure App Service (Linux, Node 22, F1)<br/>node dist/server.js, httpsOnly, HSTS"]
+        appsvc["Azure App Service (Linux, Node 22, F1)<br/>node dist/server.js: API + client build,<br/>httpsOnly, HSTS"]
         sql[("Azure SQL Database<br/>serverless free offer, TLS 1.2+")]
     end
 
@@ -142,23 +141,23 @@ graph TB
     dev -->|push / PR| gh
     gh --> ciw
     ciw -->|success on main| dw
-    dw -->|deploy client| swa
-    dw -->|"deploy API bundle<br/>+ run migrations/seeds"| appsvc
+    dw -->|"deploy API + client bundle<br/>+ run migrations/seeds"| appsvc
     dw -->|"migrate/seed via DATABASE_URL"| sql
     cron -->|"POST /api/internal/refresh<br/>(INTERNAL_JOB_SECRET)"| appsvc
     appsvc -->|"encrypt=true"| sql
-    browser -->|HTTPS| swa
-    browser -->|"JSON, cookie (exact-origin CORS)"| appsvc
+    browser -->|"HTTPS: document, assets, JSON + cookie<br/>(one origin, ADR 0014)"| appsvc
 ```
 
 Fixed points (see [`deploy.md`](../deploy.md) for the detail):
 
 - `deploy.yml` triggers **only** on `workflow_run` after CI succeeds on `main` —
   never from a PR or a fork.
-- The API is shipped as a self-contained bundle (compiled JS + production
-  dependencies); App Service runs it with `SCM_DO_BUILD_DURING_DEPLOYMENT=false`.
-- CORS is locked to exactly the Static Web App origin; there is no wildcard
-  fallback, so a missing `WEB_ORIGIN` fails closed.
+- The API is shipped as a self-contained bundle (compiled JS, the client build
+  in `public/`, production dependencies); App Service runs it with
+  `SCM_DO_BUILD_DURING_DEPLOYMENT=false`.
+- Client and API share one origin so the `SameSite=Lax` session cookie works
+  ([ADR 0014](adr/0014-serve-client-from-app-service.md), #111). CORS stays
+  locked to that origin as a backstop; there is no wildcard fallback.
 - Deploys are serialised by a `concurrency` group and gated by a required
   reviewer on the `production` environment.
 
@@ -168,20 +167,22 @@ Each row is an ADR in [`adr/`](adr/README.md). These were fixed in
 [`IMPLEMENTATION_PLAN.md`](../plan/IMPLEMENTATION_PLAN.md) section 2 and are not
 reopened here.
 
-| #    | Decision                                                 |
-| ---- | -------------------------------------------------------- |
-| 0001 | npm-workspaces monorepo (`client` / `server` / `shared`) |
-| 0002 | React 18 + Vite + strict TypeScript frontend             |
-| 0003 | Node 22 + Express 5 + TypeScript backend                 |
-| 0004 | Azure SQL Database via Knex + `mssql`                    |
-| 0005 | Azure Static Web Apps + App Service (Linux) hosting      |
-| 0006 | Google Identity sign-in; Soteria stores no passwords     |
-| 0007 | Browser-to-HIBP k-anonymity breach check                 |
-| 0008 | Client-side password strength with `@zxcvbn-ts/core`     |
-| 0009 | NVD CVE API 2.0 as the required external live data       |
-| 0010 | GitHub Actions cron for all scheduled work               |
-| 0011 | Vitest + Supertest + Playwright + axe testing stack      |
-| 0012 | Visual design derived from a fixed seed                  |
+| #    | Decision                                                                 |
+| ---- | ------------------------------------------------------------------------ |
+| 0001 | npm-workspaces monorepo (`client` / `server` / `shared`)                 |
+| 0002 | React 18 + Vite + strict TypeScript frontend                             |
+| 0003 | Node 22 + Express 5 + TypeScript backend                                 |
+| 0004 | Azure SQL Database via Knex + `mssql`                                    |
+| 0005 | Azure Static Web Apps + App Service (Linux) hosting (superseded by 0014) |
+| 0006 | Google Identity sign-in; Soteria stores no passwords                     |
+| 0007 | Browser-to-HIBP k-anonymity breach check                                 |
+| 0008 | Client-side password strength with `@zxcvbn-ts/core`                     |
+| 0009 | NVD CVE API 2.0 as the required external live data                       |
+| 0010 | GitHub Actions cron for all scheduled work                               |
+| 0011 | Vitest + Supertest + Playwright + axe testing stack                      |
+| 0012 | Visual design derived from a fixed seed                                  |
+| 0013 | CSP allowances for Google Identity Services                              |
+| 0014 | Serve the client from the App Service (one origin)                       |
 
 ## 6. Runtime views by feature
 

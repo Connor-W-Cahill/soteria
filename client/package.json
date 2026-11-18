@@ -10,7 +10,7 @@
     "test": "vitest run",
     "playwright": "playwright test",
     "tokens:gen": "node scripts/generate-tokens.mjs",
-    "csp:gen": "node scripts/gen-swa-config.mjs"
+    "csp:gen": "node scripts/gen-security-headers.mjs"
   },
   "dependencies": {
     "@soteria/shared": "0.1.0",

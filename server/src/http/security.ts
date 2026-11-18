@@ -3,9 +3,10 @@ import helmet from "helmet";
 import type { RequestHandler } from "express";
 
 /**
- * Origins allowed to call the API from a browser. In production this is exactly
- * the Static Web App origin (`WEB_ORIGIN`, set by `infra/deploy.sh`); in
- * development it is the Vite dev server. There is no wildcard fallback: an
+ * Origins allowed to call the API cross-origin from a browser. Since #111 the
+ * deployed client is served by the API itself, so production browser calls are
+ * same-origin and this list is inert there (`WEB_ORIGIN` is set to the site's
+ * own origin by `infra/main.bicep`); in development it is the Vite dev server. There is no wildcard fallback: an
  * unset `WEB_ORIGIN` in production means no cross-origin browser call is
  * allowed at all, which fails visibly rather than opening the API up.
  */
@@ -62,8 +63,13 @@ export function securityHeaders(
       env.NODE_ENV === "production"
         ? { maxAge: 31_536_000, includeSubDomains: true, preload: true }
         : false,
-    // The API serves JSON only; the client's CSP is owned by the Static Web App.
+    // The policy for API (JSON) responses. Client documents get the client's
+    // own CSP instead, from http/client.ts, which overrides this header.
     contentSecurityPolicy: { directives: { defaultSrc: ["'none'"] } },
+    // Now that this server also sends the client document (#111), helmet's
+    // default `same-origin` would sever the Google sign-in popup's link back to
+    // the page; Google documents `same-origin-allow-popups` for GIS.
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     crossOriginResourcePolicy: { policy: "same-site" },
     referrerPolicy: { policy: "no-referrer" },
   });

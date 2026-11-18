@@ -8,6 +8,7 @@ import { readAuthConfig, type AuthConfig } from "./auth/config.js";
 import { attachSession } from "./auth/middleware.js";
 import { authRouter } from "./auth/routes.js";
 import { isDbConnected } from "./db/knex.js";
+import { clientRouter, resolveClientDir } from "./http/client.js";
 import { errorHandler, notFoundHandler } from "./http/errors.js";
 import { globalRateLimit, publicRateLimit } from "./http/rate-limit.js";
 import { requestId } from "./http/request-id.js";
@@ -44,6 +45,12 @@ export interface AppOptions {
   questionnaireRouterOptions?: Parameters<typeof questionnaireRouter>[0];
   /** Overridable so route tests need no database. */
   scoringRouterOptions?: Parameters<typeof scoringRouter>[0];
+  /**
+   * The built client to serve from this origin (#111, ADR-0014). Defaults to
+   * `resolveClientDir()`: `CLIENT_DIR`, or the bundled `public/` in production.
+   * `null` serves no client, which is the development default (Vite serves it).
+   */
+  clientDir?: string | null;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -109,6 +116,14 @@ export function createApp(options: AppOptions = {}) {
         .catch(next);
     },
   );
+
+  // After every API route: the client router never answers /api paths, so an
+  // unknown API route still gets the JSON 404 envelope below.
+  const clientDir =
+    options.clientDir === undefined ? resolveClientDir() : options.clientDir;
+  if (clientDir !== null && clientDir !== undefined) {
+    app.use(clientRouter(clientDir));
+  }
 
   // Must stay last: unmatched routes become a 404 envelope, and every thrown or
   // forwarded error becomes an `{ error: { code, message, details? } }` body.

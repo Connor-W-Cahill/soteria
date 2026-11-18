@@ -49,7 +49,6 @@ OUTPUTS=$(az deployment group create \
 
 API_NAME=$(jq -r '.apiName.value' <<<"$OUTPUTS")
 API_URL=$(jq -r '.apiUrl.value' <<<"$OUTPUTS")
-WEB_NAME=$(jq -r '.staticWebAppName.value' <<<"$OUTPUTS")
 WEB_URL=$(jq -r '.webUrl.value' <<<"$OUTPUTS")
 SQL_FQDN=$(jq -r '.sqlServerFqdn.value' <<<"$OUTPUTS")
 DB_NAME=$(jq -r '.databaseName.value' <<<"$OUTPUTS")
@@ -66,34 +65,32 @@ az webapp config appsettings set \
     "SESSION_SECRET=$SESSION_SECRET" \
   --output none
 
-SWA_TOKEN=$(az staticwebapp secrets list \
-  --name "$WEB_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --query properties.apiKey --output tsv)
-
 cat <<SUMMARY
 
 Provisioned.
 
-  Client   ${WEB_URL}
-  API      ${API_URL}
+  Site     ${WEB_URL}  (client and API, one origin)
   Health   ${API_URL}/api/health
   SQL      ${SQL_FQDN} (database ${DB_NAME})
 
 Next steps (see docs/deploy.md):
 
   1. Add your own IP to the SQL firewall, then run the migrations:
-       az sql server firewall-rule create -g ${RESOURCE_GROUP} -s ${WEB_NAME%-web-*}-sql-... \\
+       az sql server firewall-rule create -g ${RESOURCE_GROUP} -s ${SQL_FQDN%%.*} \\
          -n my-laptop --start-ip-address <ip> --end-ip-address <ip>
        DATABASE_URL='<the URL printed by az webapp config appsettings list>' npm run db:migrate
        DATABASE_URL='...' npm run db:seed
 
   2. Store these as GitHub Actions secrets:
        AZURE_WEBAPP_NAME              ${API_NAME}
-       AZURE_STATIC_WEB_APPS_API_TOKEN  ${SWA_TOKEN}
-       VITE_API_URL                   ${API_URL}
+       API_URL                        ${API_URL}
        GOOGLE_CLIENT_ID               ${GOOGLE_CLIENT_ID}
      and AZURE_CREDENTIALS / AZURE_WEBAPP_PUBLISH_PROFILE per docs/deploy.md.
+     The VITE_API_URL and AZURE_STATIC_WEB_APPS_API_TOKEN secrets are no longer
+     used (ADR-0014); delete them if an earlier run created them.
+
+  3. Add ${WEB_URL} as an Authorized JavaScript origin on the Google OAuth
+     client, or the sign-in button will refuse to render.
 
      SESSION_SECRET was generated and set on the App Service. It is not printed
      here and does not need to be a GitHub secret: only the API reads it. Read it

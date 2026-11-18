@@ -17,14 +17,12 @@ export const SESSION_COOKIE = "soteria_session";
  * - `secure` is on everywhere except plain-HTTP local development.
  * - `path: "/"` so one cookie covers the whole site.
  *
- * `SameSite=Lax` REQUIRES the client and the API to be same-origin, and the
- * topology in `infra/` does not yet make them so: the client is a Static Web App
- * on `*.azurestaticapps.net` and the API an App Service on
- * `*.azurewebsites.net`, which are cross-site, so this cookie would be neither
- * stored nor sent in production. An earlier version of this comment asserted the
- * opposite. Tracked as issue #111, which blocks the production half of US-14;
- * the fix is to serve both from one origin, NOT to switch to `SameSite=None`,
- * which would delete the CSRF control above.
+ * `SameSite=Lax` REQUIRES the client and the API to be same-site. They are
+ * same-origin: in production the API serves the client build itself
+ * (`http/client.ts`, ADR-0014, issue #111), and in development Vite proxies
+ * `/api` to the API, so the browser only ever talks to one origin. Do NOT
+ * "fix" a future cross-site topology by switching to `SameSite=None`; that
+ * deletes the CSRF control above.
  */
 function attributes(config: AuthConfig) {
   return {

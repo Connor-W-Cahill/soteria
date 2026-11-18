@@ -39,18 +39,23 @@ jobs:
       - name: Build the client
         run: npm run build -w @soteria/client
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          # Empty on purpose: the API serves the client, so every call is a
+          # relative, same-origin path and the CSP needs no API origin (#111).
+          VITE_API_URL: ""
           # Vite inlines this at build time, so it has to be here rather than an
           # App Service setting. Public by design; it must match the id the API
           # verifies the token audience against (docs/deploy.md).
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
-      # The API is deployed as a self-contained bundle: compiled JS plus the
-      # production dependency tree, with no build step on App Service.
-      - name: Assemble the API bundle
+      # The API is deployed as a self-contained bundle: compiled JS, the client
+      # build (served by the API from public/, ADR-0014), and the production
+      # dependency tree, with no build step on App Service.
+      - name: Assemble the bundle
         run: |
+          test -f client/dist/security-headers.json
           mkdir -p .deploy/api
           cp -r server/dist .deploy/api/dist
+          cp -r client/dist .deploy/api/public
           cp server/package.json .deploy/api/package.json
           cp package-lock.json .deploy/api/package-lock.json
           npm ci --omit=dev --prefix .deploy/api --ignore-scripts
@@ -60,21 +65,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Deploy the API to App Service
+      - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .deploy/api
-
-      - name: Deploy the client to Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          app_location: client/dist
-          skip_app_build: true
-          skip_api_build: true
 
       - name: Verify the deployment is healthy
         run: |
@@ -90,3 +86,12 @@ jobs:
           done
           echo "The API did not report a healthy, database-connected state."
           exit 1
+
+      # The client document must come from this origin with its own CSP, not
+      # the API's default-src 'none' (#111).
+      - name: Verify the client is served with its CSP
+        run: |
+          headers=$(curl -fsSI "${{ secrets.API_URL }}/signin")
+          echo "$headers"
+          grep -qi "^content-security-policy: default-src 'self'" <<<"$headers"
+          grep -qi "^x-frame-options: DENY" <<<"$headers"
